@@ -1,0 +1,118 @@
+.macro-targets-card {
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.macro-targets-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.macro-targets-card h2 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.health-score-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.health-score-value {
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.health-score-label {
+  font-size: 0.75rem;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.macro-bar {
+  margin-bottom: 20px;
+}
+
+.macro-bar:last-child {
+  margin-bottom: 0;
+}
+
+.macro-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.macro-header .label {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.macro-header .remaining {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.macro-header .remaining.over {
+  color: #ff4444;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 24px;
+  background: #2a2a2a;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 12px;
+  transition: width 0.3s ease;
+}
+
+.progress-fill.blue {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+.progress-fill.red {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.progress-fill.yellow {
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.progress-fill.green {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.progress-fill.over {
+  background: linear-gradient(90deg, #ff4444, #cc0000);
+}
+
+.macro-numbers {
+  display: flex;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.macro-numbers span:first-child {
+  font-weight: 600;
+  color: #fff;
+}
+

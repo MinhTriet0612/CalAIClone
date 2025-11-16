@@ -1,0 +1,125 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.meal-image-container {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.meal-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #2a2a2a;
+  padding: 8px;
+}
+
+.modal-content h3 {
+  margin: 0 0 24px 0;
+  font-size: 1.5rem;
+}
+
+.detected-items,
+.meal-breakdown,
+.projected-remaining {
+  margin-bottom: 24px;
+}
+
+.detected-items h4,
+.meal-breakdown h4,
+.projected-remaining h4 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  color: #aaa;
+}
+
+.detected-items ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.detected-items li {
+  padding: 8px 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.detected-items li:last-child {
+  border-bottom: none;
+}
+
+.meal-macros,
+.remaining-macros {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.meal-macros div,
+.remaining-macros div {
+  padding: 12px;
+  background: #2a2a2a;
+  border-radius: 8px;
+}
+
+.remaining-macros div.negative {
+  background: #3a1a1a;
+  color: #ff6666;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-actions button {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancel-btn {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+.cancel-btn:hover {
+  background: #3a3a3a;
+}
+
+.confirm-btn {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.confirm-btn:hover {
+  background: #2563eb;
+}
+
