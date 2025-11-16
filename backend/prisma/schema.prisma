@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(cuid())
+  email    String @unique
+  password String
+  role     String @default("user") // "user" | "admin"
+
+  // Profile
+  age                Int?
+  gender             String? // "male" | "female" | "other"
+  height             Float? // cm
+  weight             Float? // kg
+  activityLevel      String? // "sedentary" | "light" | "moderate" | "active" | "very_active"
+  goal               String? // "weight_loss" | "muscle_gain" | "maintenance" | "cutting" | "health"
+  targetWeight       Float?
+  targetDate         DateTime?
+  dietaryPreferences String[]  @default([])
+
+  // Targets
+  targetCalories Int   @default(2000)
+  targetProtein  Float @default(150)
+  targetCarbs    Float @default(250)
+  targetFats     Float @default(65)
+
+  // Relations
+  meals        Meal[]
+  dailyTargets DailyTarget[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Meal {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  foodItems   String[]
+  calories    Float
+  protein     Float
+  carbs       Float
+  fats        Float
+  imageUrl    String?
+  healthScore Int? // Health score from 1-10 (optional, can be calculated or set manually)
+
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, date])
+  @@map("meals")
+}
+
+model DailyTarget {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date        DateTime // Date for this target (YYYY-MM-DD, time set to 00:00:00)
+  calories    Int
+  protein     Float
+  carbs       Float
+  fats        Float
+  healthScore Int? // Daily health score from 1-10 (optional, can be calculated or set manually)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("daily_targets")
+}
+
