@@ -1,8 +1,9 @@
 .history-container {
-  background: #1a1a1a;
-  border-radius: 12px;
-  padding: 24px;
+  background: #ffffff;
+  padding: 28px;
   margin-bottom: 24px;
+  border-radius: 24px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
 }
 
 .history-header {
@@ -17,6 +18,7 @@
 .history-header h2 {
   margin: 0;
   font-size: 1.5rem;
+  color: #0f172a;
 }
 
 .history-filters {
@@ -34,84 +36,87 @@
 
 .filter-group label {
   font-size: 0.85rem;
-  color: #aaa;
+  color: #64748b;
+  font-weight: 600;
 }
 
 .filter-group input {
-  padding: 8px 12px;
-  background: #2a2a2a;
-  border: 1px solid #3a3a3a;
-  border-radius: 6px;
-  color: #fff;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #0f172a;
   font-size: 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .filter-group input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.3);
 }
 
 .load-button {
-  padding: 8px 20px;
-  background: #3b82f6;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
   color: #fff;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   height: fit-content;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
 }
 
 .load-button:hover:not(:disabled) {
-  background: #2563eb;
+  transform: translateY(-2px);
 }
 
 .load-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .error-message {
-  background: #ff4444;
-  color: #fff;
+  background: #fee2e2;
+  color: #b91c1c;
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   margin-bottom: 20px;
   font-size: 0.9rem;
 }
 
-.loading {
-  text-align: center;
-  padding: 40px;
-  color: #888;
-}
-
+.loading,
 .empty-history {
   text-align: center;
   padding: 40px;
-  color: #888;
+  color: #94a3b8;
 }
 
 .history-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .history-item {
-  background: #2a2a2a;
-  border-radius: 8px;
-  padding: 16px;
-  transition: background 0.2s;
+  background: #f8fafc;
+  border-radius: 18px;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  transition: border-color 0.2s ease, transform 0.2s ease;
 }
 
 .history-item:hover {
-  background: #3a3a3a;
+  border-color: #cbd5f5;
+  transform: translateY(-2px);
 }
 
 .history-item.today {
-  border: 2px solid #3b82f6;
+  border: 1px solid #93c5fd;
+  box-shadow: 0 12px 24px rgba(147, 197, 253, 0.35);
 }
 
 .history-date {
@@ -121,14 +126,14 @@
   font-weight: 600;
   font-size: 1.1rem;
   margin-bottom: 12px;
-  color: #fff;
+  color: #0f172a;
 }
 
 .today-badge {
-  background: #3b82f6;
-  color: #fff;
-  padding: 2px 8px;
-  border-radius: 4px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 4px 10px;
+  border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -147,25 +152,25 @@
 }
 
 .stat-label {
-  color: #aaa;
+  color: #94a3b8;
   font-size: 0.9rem;
 }
 
 .stat-value {
   font-weight: 600;
-  color: #fff;
+  color: #0f172a;
 }
 
 .stat-value.good {
-  color: #4CAF50;
+  color: #16a34a;
 }
 
 .stat-value.over {
-  color: #ff4444;
+  color: #dc2626;
 }
 
 .stat-value.low {
-  color: #FF9800;
+  color: #d97706;
 }
 
 .history-progress {
@@ -176,46 +181,39 @@
 
 .progress-bar-container {
   flex: 1;
-  height: 12px;
-  min-height: 12px;
-  background: linear-gradient(90deg, #555, #666);
-  border-radius: 6px;
+  border-radius: 0px;
   overflow: hidden;
-  position: relative;
-  border: 1px solid #3a3a3a;
+  /* border: 1px solid #e2e8f0; */
   display: flex;
+  align-items: center;
 }
 
 .progress-bar {
-  height: 100%;
+  height: 12px;
   min-height: 12px;
   min-width: 3px;
-  border-radius: 4px;
   transition: width 0.3s ease;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
 }
 
 .progress-bar.consumed.good {
-  background: linear-gradient(90deg, #4CAF50, #66BB6A);
+  background: linear-gradient(90deg, #a7f3d0, #34d399);
 }
 
 .progress-bar.consumed.over {
-  background: linear-gradient(90deg, #ff4444, #ff6666);
+  background: linear-gradient(90deg, #fecaca, #f87171);
 }
 
 .progress-bar.consumed.low {
-  background: linear-gradient(90deg, #FF9800, #FFB74D);
+  background: linear-gradient(90deg, #fde68a, #fbbf24);
 }
 
 .progress-bar.remaining {
-  background: linear-gradient(90deg, #555, #666);
-  opacity: 0.6;
+  background: #e2e8f0;
 }
 
 .progress-text {
   font-size: 0.85rem;
-  color: #aaa;
+  color: #94a3b8;
   min-width: 45px;
   text-align: right;
 }
-

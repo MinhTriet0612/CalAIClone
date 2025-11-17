@@ -1,114 +1,176 @@
 .meals-list {
-  background: #1a1a1a;
-  border-radius: 12px;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0;
+}
+
+.meals-list h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #94a3b8;
 }
 
 .meals-list.empty {
   text-align: center;
   padding: 48px 24px;
-  color: #888;
+  color: #94a3b8;
+  background: #f8fafc;
+  border-radius: 20px;
 }
 
-.meals-list h3 {
-  margin: 0 0 20px 0;
-  font-size: 1.25rem;
-}
-
-.meal-item {
-  background: #2a2a2a;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 12px;
-}
-
-.meal-item:last-child {
-  margin-bottom: 0;
-}
-
-.meal-content {
+.meal-card {
   display: flex;
   gap: 16px;
+  padding: 16px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.1);
+  align-items: center;
+}
+
+.meal-image {
+  width: 92px;
+  height: 92px;
+  border-radius: 18px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #f6f8fb, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.meal-image--empty {
+  cursor: default;
+}
+
+.meal-image:hover {
+  transform: translateY(-2px);
+}
+
+.meal-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.meal-image span {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.meal-image:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 4px;
+}
+
+.meal-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.meal-top-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
   align-items: flex-start;
 }
 
-.meal-info {
+.meal-title-group {
   flex: 1;
   min-width: 0;
 }
 
-.meal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
 .meal-name {
   font-weight: 600;
-  font-size: 1.1rem;
+  color: #0f172a;
+  font-size: 1rem;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.meal-header-right {
+.meal-subtitle-row {
   display: flex;
+  gap: 8px;
   align-items: center;
-  gap: 12px;
+  margin-top: 4px;
+  flex-wrap: wrap;
 }
 
-.meal-health-score {
+.meal-time {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.meal-health-pill {
+  font-size: 0.75rem;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #ecfccb;
+  color: #4d7c0f;
+}
+
+.meal-calories-chip {
+  background: #fef3c7;
+  color: #b45309;
   font-weight: 600;
+  border-radius: 999px;
+  padding: 6px 14px;
   font-size: 0.9rem;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.meal-calories {
-  font-weight: 600;
-  color: #3b82f6;
+  white-space: nowrap;
 }
 
 .meal-items {
-  color: #aaa;
+  margin: 0;
+  color: #475569;
   font-size: 0.9rem;
-  margin-bottom: 8px;
 }
 
-.meal-macros {
+.meal-macro-row {
   display: flex;
-  gap: 16px;
-  font-size: 0.85rem;
-  color: #888;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.meal-macros span {
-  padding: 4px 8px;
-  background: #1a1a1a;
-  border-radius: 4px;
-}
-
-.meal-image-thumbnail {
-  width: 80px;
-  height: 80px;
-  min-width: 80px;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  background: #1a1a1a;
-  display: flex;
+.macro-chip {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  transition: transform 0.2s;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
-.meal-image-thumbnail:hover {
-  transform: scale(1.05);
+.macro-chip .macro-icon {
+  font-size: 0.85rem;
 }
 
-.meal-image-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.macro-chip.protein {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.macro-chip.carbs {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.macro-chip.fats {
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
 .image-modal-overlay {
@@ -117,7 +179,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(15, 23, 42, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -132,15 +194,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #fff;
+  padding: 24px;
+  border-radius: 24px;
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.2);
 }
 
 .image-modal-close {
   position: absolute;
-  top: -40px;
+  top: -44px;
   right: 0;
-  background: rgba(255, 255, 255, 0.2);
+  background: #fff;
   border: none;
-  color: #fff;
+  color: #0f172a;
   font-size: 2rem;
   width: 40px;
   height: 40px;
@@ -149,11 +215,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.2);
 }
 
 .image-modal-close:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #e2e8f0;
 }
 
 .image-modal-image {

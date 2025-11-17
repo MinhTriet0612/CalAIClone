@@ -287,7 +287,7 @@ export class MealsService {
       const dayMeals = mealsByDate.get(dateKey) || [];
 
       // Get targets for this date (don't auto-create, just get what exists)
-      const targets = await this.dailyTargetsService.getTargetsForDate(userId, dateKey, false);
+      const targets = await this.dailyTargetsService.getTargetsForDate(userId, dateKey, true);
 
       // Calculate consumed
       const consumed: MacroTargets = dayMeals.reduce(

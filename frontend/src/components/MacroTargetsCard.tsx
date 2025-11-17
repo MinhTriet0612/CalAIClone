@@ -40,17 +40,17 @@ export function MacroTargetsCard({ targets, consumed, remaining, healthScore }: 
   }) => {
     const percentage = (consumed / target) * 100;
     const isOver = consumed > target;
+    const overAmount = Math.max(0, consumed - target);
+    const remainingText = isOver ? `${overAmount} ${unit} over` : `${remaining} ${unit} left`;
 
     return (
       <div className="macro-bar">
         <div className="macro-header">
           <span className="label">{label}</span>
-          <span className={`remaining ${isOver ? 'over' : ''}`}>
-            {remaining} {unit} left
-          </span>
+          <span className={`remaining ${isOver ? 'over' : ''}`}>{remainingText}</span>
         </div>
 
-        <div className="progress-bar">
+        <div className={`progress-bar ${isOver ? 'over' : ''}`}>
           <div
             className={`progress-fill ${color} ${isOver ? 'over' : ''}`}
             style={{ width: `${Math.min(100, percentage)}%` }}
@@ -93,7 +93,7 @@ export function MacroTargetsCard({ targets, consumed, remaining, healthScore }: 
         consumed={consumed.protein}
         remaining={remaining.protein}
         unit="g"
-        color="red"
+        color="purple"
       />
 
       <MacroBar

@@ -22,6 +22,20 @@ function ImageModal({ imageUrl, onClose }: ImageModalProps) {
   );
 }
 
+const getMealTime = (meal: Meal) => {
+  const candidate = meal as unknown as Record<string, unknown>;
+  const potentialKeys = ['loggedAt', 'time', 'recordedAt'];
+
+  for (const key of potentialKeys) {
+    const value = candidate[key];
+    if (typeof value === 'string' && value.trim()) {
+      return value;
+    }
+  }
+
+  return undefined;
+};
+
 export function MealsList({ meals }: MealsListProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -36,66 +50,77 @@ export function MealsList({ meals }: MealsListProps) {
   return (
     <>
       <div className="meals-list">
-        <h3>Meals Logged Today</h3>
+        <h3>Recently uploaded</h3>
         {meals.map((meal) => {
-          const getHealthScoreColor = (score?: number) => {
-            if (!score) return '#999';
-            if (score >= 8) return '#4CAF50';
-            if (score >= 6) return '#FF9800';
-            return '#F44336';
-          };
+          const mealTime = getMealTime(meal);
 
           return (
-            <div key={meal.id} className="meal-item">
-              <div className="meal-content">
-                <div className="meal-info">
-                  <div className="meal-header">
-                    <span className="meal-name">{meal.name}</span>
-                    <div className="meal-header-right">
-                      {meal.healthScore !== undefined && (
-                        <span 
-                          className="meal-health-score"
-                          style={{ color: getHealthScoreColor(meal.healthScore) }}
-                          title={`Health Score: ${meal.healthScore}/10`}
-                        >
-                          ⭐ {meal.healthScore}
-                        </span>
-                      )}
-                      <span className="meal-calories">{meal.calories} cal</span>
-                    </div>
-                  </div>
-                  <div className="meal-items">
-                    {meal.foodItems.join(', ')}
-                  </div>
-                  <div className="meal-macros">
-                    <span>{meal.protein}g P</span>
-                    <span>{meal.carbs}g C</span>
-                    <span>{meal.fats}g F</span>
-                  </div>
-                </div>
-                {meal.imageUrl && (
-                  <div 
-                    className="meal-image-thumbnail"
-                    onClick={() => setSelectedImage(meal.imageUrl || null)}
-                  >
-                    <img 
-                      src={meal.imageUrl} 
-                      alt={meal.name}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
+            <article key={meal.id} className="meal-card">
+              <div
+                className={`meal-image${meal.imageUrl ? '' : ' meal-image--empty'}`}
+                onClick={() => meal.imageUrl && setSelectedImage(meal.imageUrl)}
+                role={meal.imageUrl ? 'button' : undefined}
+                tabIndex={meal.imageUrl ? 0 : -1}
+                aria-label={meal.imageUrl ? `View image of ${meal.name}` : undefined}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && meal.imageUrl) {
+                    setSelectedImage(meal.imageUrl);
+                  }
+                }}
+              >
+                {meal.imageUrl ? (
+                  <img
+                    src={meal.imageUrl}
+                    alt={meal.name}
+                    onError={(event) => {
+                      (event.target as HTMLImageElement).style.visibility = 'hidden';
+                    }}
+                  />
+                ) : (
+                  <span>Photo</span>
                 )}
               </div>
-            </div>
+              <div className="meal-details">
+                <div className="meal-top-row">
+                  <div className="meal-title-group">
+                    <span className="meal-name" title={meal.name}>
+                      {meal.name}
+                    </span>
+                    <div className="meal-subtitle-row">
+                      {mealTime && <span className="meal-time">{mealTime}</span>}
+                      {meal.healthScore !== undefined && (
+                        <span className="meal-health-pill" title={`Health Score: ${meal.healthScore}/10`}>
+                          ⭐ {meal.healthScore}/10
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="meal-calories-chip">🔥 {meal.calories} calories</span>
+                </div>
+                <p className="meal-items">{meal.foodItems.join(', ')}</p>
+                <div className="meal-macro-row">
+                  <span className="macro-chip protein">
+                    <span className="macro-icon" aria-hidden="true">🍗</span>
+                    {meal.protein}g
+                  </span>
+                  <span className="macro-chip carbs">
+                    <span className="macro-icon" aria-hidden="true">🌾</span>
+                    {meal.carbs}g
+                  </span>
+                  <span className="macro-chip fats">
+                    <span className="macro-icon" aria-hidden="true">💧</span>
+                    {meal.fats}g
+                  </span>
+                </div>
+              </div>
+            </article>
           );
         })}
       </div>
       {selectedImage && (
-        <ImageModal 
-          imageUrl={selectedImage} 
-          onClose={() => setSelectedImage(null)} 
+        <ImageModal
+          imageUrl={selectedImage}
+          onClose={() => setSelectedImage(null)}
         />
       )}
     </>

@@ -3,17 +3,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #0a0a0a;
+  background: linear-gradient(135deg, #eef2ff, #fefce8);
   padding: 20px;
 }
 
 .onboarding-card {
-  background: #1a1a1a;
-  border-radius: 16px;
-  padding: 32px;
-  max-width: 500px;
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 40px;
+  max-width: 520px;
   width: 100%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 35px 70px rgba(15, 23, 42, 0.15);
 }
 
 .onboarding-step {
@@ -22,12 +22,12 @@
 
 .onboarding-step h2 {
   margin: 0 0 12px 0;
-  font-size: 1.75rem;
-  color: #fff;
+  font-size: 1.85rem;
+  color: #0f172a;
 }
 
 .subtitle {
-  color: #888;
+  color: #64748b;
   margin-bottom: 32px;
   font-size: 0.95rem;
 }
@@ -39,23 +39,25 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #aaa;
-  font-weight: 500;
+  color: #475569;
+  font-weight: 600;
 }
 
 .form-group input {
   width: 100%;
   padding: 12px 16px;
-  background: #2a2a2a;
-  border: 1px solid #3a3a3a;
-  border-radius: 8px;
-  color: #fff;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  color: #0f172a;
   font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.4);
 }
 
 .option-list {
@@ -67,32 +69,35 @@
 
 .option-button {
   padding: 16px 20px;
-  background: #2a2a2a;
-  border: 2px solid #3a3a3a;
-  border-radius: 8px;
-  color: #fff;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  color: #0f172a;
   font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   text-align: left;
+  font-weight: 600;
 }
 
 .option-button:hover {
-  background: #3a3a3a;
-  border-color: #4a4a4a;
+  border-color: #cbd5f5;
+  transform: translateY(-1px);
 }
 
 .option-button.selected {
-  background: #3b82f6;
-  border-color: #3b82f6;
+  background: #2563eb;
+  border-color: #2563eb;
   color: #fff;
+  box-shadow: 0 15px 30px rgba(37, 99, 235, 0.25);
 }
 
 .recommendations-card {
-  background: #2a2a2a;
-  border-radius: 12px;
+  background: #f8fafc;
+  border-radius: 18px;
   padding: 24px;
   margin: 24px 0;
+  border: 1px solid #e2e8f0;
 }
 
 .recommendation-item {
@@ -100,7 +105,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 0;
-  border-bottom: 1px solid #3a3a3a;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .recommendation-item:last-child {
@@ -108,18 +113,18 @@
 }
 
 .recommendation-item .label {
-  color: #aaa;
+  color: #94a3b8;
   font-size: 1rem;
 }
 
 .recommendation-item .value {
-  color: #fff;
+  color: #0f172a;
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .info-text {
-  color: #888;
+  color: #94a3b8;
   font-size: 0.9rem;
   text-align: center;
   margin-top: 24px;
@@ -138,32 +143,34 @@
   flex: 1;
   padding: 14px 24px;
   border: none;
-  border-radius: 8px;
+  border-radius: 16px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .back-button {
-  background: #2a2a2a;
-  color: #fff;
-  border: 1px solid #3a3a3a;
+  background: #f8fafc;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
 }
 
 .back-button:hover:not(:disabled) {
-  background: #3a3a3a;
+  border-color: #cbd5f5;
+  transform: translateY(-1px);
 }
 
 .continue-button,
 .approve-button {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
   color: #fff;
+  box-shadow: 0 18px 35px rgba(79, 70, 229, 0.3);
 }
 
 .continue-button:hover:not(:disabled),
 .approve-button:hover:not(:disabled) {
-  background: #2563eb;
+  transform: translateY(-2px);
 }
 
 .back-button:disabled,
@@ -171,29 +178,28 @@
 .approve-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .progress-bar {
-  width: 100%;
-  height: 4px;
-  background: #2a2a2a;
-  border-radius: 2px;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 999px;
   margin-top: 24px;
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: #3b82f6;
+  background: linear-gradient(90deg, #60a5fa, #7c3aed);
   transition: width 0.3s ease;
 }
 
 .error-message {
-  background: #ff4444;
-  color: #fff;
+  background: #fee2e2;
+  color: #b91c1c;
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   margin-bottom: 20px;
   font-size: 0.9rem;
 }
-

@@ -8,7 +8,7 @@ export class DailyTargetsService {
   constructor(
     private prisma: PrismaService,
     private usersService: UsersService,
-  ) {}
+  ) { }
 
   /**
    * Get targets for a specific date
