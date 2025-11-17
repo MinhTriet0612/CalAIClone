@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { MealsModule } from './meals/meals.module';
 import { DailyTargetsModule } from './daily-targets/daily-targets.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { OnboardingModule } from './onboarding/onboarding.module';
     MealsModule,
     DailyTargetsModule,
     OnboardingModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

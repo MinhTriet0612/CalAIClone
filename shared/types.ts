@@ -55,3 +55,8 @@ export interface UserProfile {
   dietaryPreferences?: string[];
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+

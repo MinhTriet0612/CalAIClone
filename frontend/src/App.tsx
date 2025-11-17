@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import { Login } from './components/Login';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { MacroTargetsCard } from './components/MacroTargetsCard';
@@ -7,6 +8,8 @@ import { MealsList } from './components/MealsList';
 import { History } from './components/History';
 import { AddMealButton } from './components/AddMealButton';
 import { MealAnalysisModal } from './components/MealAnalysisModal';
+import { MeatChat } from './components/MeatChat';
+import { Settings } from './components/Settings';
 import { mealsApi, usersApi } from './services/api';
 import { DailySummary, MealAnalysis } from '../../shared/types';
 import './App.css';
@@ -179,6 +182,37 @@ function AppContent() {
     );
   }
 
+  const dashboard = (
+    <div className="dashboard">
+      <MacroTargetsCard
+        targets={dailySummary.targets}
+        consumed={dailySummary.consumed}
+        remaining={dailySummary.remaining}
+        healthScore={dailySummary.healthScore}
+      />
+
+      <MealsList meals={dailySummary.meals} />
+
+      <History />
+
+      <AddMealButton onMealAnalyzed={handleMealAnalyzed} />
+
+      {pendingMeal && (
+        <MealAnalysisModal
+          meal={pendingMeal}
+          currentRemaining={dailySummary.remaining}
+          onConfirm={handleConfirmMeal}
+          onCancel={() => {
+            setPendingMeal(null);
+            setPendingFile(null);
+          }}
+          onReAnalyze={handleReAnalyze}
+          analyzing={analyzing}
+        />
+      )}
+    </div>
+  );
+
   return (
     <div className="App">
       <header className="App-header">
@@ -196,34 +230,31 @@ function AppContent() {
         </div>
       </header>
 
-      <div className="dashboard">
-        <MacroTargetsCard
-          targets={dailySummary.targets}
-          consumed={dailySummary.consumed}
-          remaining={dailySummary.remaining}
-          healthScore={dailySummary.healthScore}
-        />
+      <nav className="app-nav">
+        <NavLink to="/" end>
+          Dashboard
+        </NavLink>
+        <NavLink to="/chat">Meat Chat</NavLink>
+        <NavLink to="/settings">Settings</NavLink>
+      </nav>
 
-        <MealsList meals={dailySummary.meals} />
-
-        <History />
-
-        <AddMealButton onMealAnalyzed={handleMealAnalyzed} />
-
-        {pendingMeal && (
-          <MealAnalysisModal
-            meal={pendingMeal}
-            currentRemaining={dailySummary.remaining}
-            onConfirm={handleConfirmMeal}
-            onCancel={() => {
-              setPendingMeal(null);
-              setPendingFile(null);
-            }}
-            onReAnalyze={handleReAnalyze}
-            analyzing={analyzing}
+      <main className="app-content">
+        <Routes>
+          <Route path="/" element={dashboard} />
+          <Route path="/chat" element={<MeatChat />} />
+          <Route
+            path="/settings"
+            element={
+              <Settings
+                onTargetsUpdated={async () => {
+                  await loadDailySummary();
+                }}
+              />
+            }
           />
-        )}
-      </div>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
     </div>
   );
 }

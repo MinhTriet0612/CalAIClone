@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { MealAnalysis, DailySummary, MacroTargets } from '../../../shared/types';
+import type { MealAnalysis, DailySummary, MacroTargets, ChatMessage } from '../../../shared/types';
 
 // CreateMealDto interface for frontend
 interface CreateMealDto {
@@ -198,6 +198,13 @@ export const usersApi = {
   // Get current user info
   getCurrentUser: async () => {
     const response = await api.get('/users/me');
+    return response.data;
+  },
+};
+
+export const chatApi = {
+  askMeatCoach: async (prompt: string, history: ChatMessage[] = []) => {
+    const response = await api.post<{ reply: string }>('/chat/meat', { prompt, history });
     return response.data;
   },
 };

@@ -13,6 +13,7 @@ import { User } from '../auth/decorators/user.decorator';
 import type { UserPayload } from '../auth/decorators/user.decorator';
 import { UsersService } from '../users/users.service';
 import { MacroTargetsDto } from '../users/dto/macro-targets.dto';
+import { DailyTargetsService } from '../daily-targets/daily-targets.service';
 
 @ApiTags('onboarding')
 @ApiBearerAuth('JWT-auth')
@@ -22,6 +23,7 @@ export class OnboardingController {
   constructor(
     private readonly onboardingService: OnboardingService,
     private readonly usersService: UsersService,
+    private readonly dailyTargetsService: DailyTargetsService,
   ) {}
 
   @Post('calculate')
@@ -78,21 +80,22 @@ export class OnboardingController {
     @User() user: UserPayload,
     @Body() targets: ApproveRecommendationsDto,
   ) {
-    await this.usersService.updateUserTargets(user.id, {
+    const normalizedTargets = {
       calories: targets.calories,
       protein: targets.protein,
       carbs: targets.carbs,
       fats: targets.fats,
-    });
+    };
+
+    await this.usersService.updateUserTargets(user.id, normalizedTargets);
+
+    const today = new Date();
+    const todayKey = today.toISOString().split('T')[0];
+    await this.dailyTargetsService.setDailyTargets(user.id, todayKey, normalizedTargets);
 
     return {
       message: 'Recommendations saved successfully',
-      targets: {
-        calories: targets.calories,
-        protein: targets.protein,
-        carbs: targets.carbs,
-        fats: targets.fats,
-      },
+      targets: normalizedTargets,
     };
   }
 }
