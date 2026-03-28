@@ -1,195 +1,214 @@
-# Cal AI - Calorie Tracker App
+# Cal AI - AI-Powered Calorie Tracker
 
-A full-stack calorie tracking application built with React, NestJS, and Google AI (Gemini) for intelligent meal recognition.
+A full-stack calorie tracking application. Users photograph meals, Google Gemini AI estimates nutrition, and the system tracks progress against personalised daily macro targets.
 
-## 🚀 Features
+## Quick Start
 
-- **AI-Powered Meal Recognition**: Take a photo of your meal and get instant nutritional analysis
-- **Real-time Calorie Tracking**: See your daily targets, consumed calories, and remaining macros
-- **Macro Tracking**: Track protein, carbs, and fats with visual progress bars
-- **Daily Summary**: View all your meals and progress for the day
-
-## 📁 Project Structure
-
-```
-cal-ai/
-├── backend/          # NestJS backend API
-│   ├── src/
-│   │   ├── ai/       # Google AI integration
-│   │   ├── meals/    # Meals module (controller, service, DTOs)
-│   │   └── config/   # Configuration module
-│   └── .env          # Environment variables
-├── frontend/         # React frontend
-│   ├── src/
-│   │   ├── components/  # React components
-│   │   └── services/    # API service
-│   └── package.json
-└── shared/           # Shared TypeScript types
-    └── types.ts
-```
-
-## 🛠️ Setup Instructions
-
-### Prerequisites
-
-- Node.js 18+ and npm
-- Google AI Studio API key ([Get it here](https://aistudio.google.com/app/apikey))
-
-### Backend Setup
-
-1. Navigate to backend directory:
 ```bash
+# 1. Backend
 cd backend
-```
-
-2. Install dependencies:
-```bash
+cp .env.example .env          # Add GOOGLE_AI_API_KEY, DATABASE_URL, JWT_SECRET
 npm install
-```
+npx prisma migrate deploy
+npm run start:dev              # http://localhost:3001
 
-3. Create `.env` file (copy from `.env.example`):
-```bash
-cp .env.example .env
-```
-
-4. Add your Google AI API key to `.env`:
-```
-GOOGLE_AI_API_KEY=your_api_key_here
-PORT=3001
-```
-
-5. Start the backend server:
-```bash
-npm run start:dev
-```
-
-The backend will run on `http://localhost:3001`
-
-### Frontend Setup
-
-1. Navigate to frontend directory:
-```bash
+# 2. Frontend
 cd frontend
-```
-
-2. Install dependencies:
-```bash
 npm install
+npm run dev                    # http://localhost:3000
+
+# 3. Monitoring (optional)
+cd monitoring
+docker compose up -d           # Grafana :3002, Prometheus :9090, GlitchTip :8000
 ```
 
-3. Start the development server:
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Business Analysis](docs/BUSINESS_ANALYSIS.md) | Stakeholders, business rules, feature matrix, domain model, risks |
+| [Use Cases](docs/USE_CASES.md) | 20 use cases with Mermaid diagrams, actor matrix |
+| [Class UML](docs/CLASS_UML.md) | Data model, service classes, component hierarchy, sequence diagrams |
+| [API Documentation](API_DOCUMENTATION.md) | Full REST API reference |
+| [Quickstart](QUICKSTART.md) | Step-by-step setup guide |
+
+## Architecture Overview
+
+```
+                    +-----------+
+                    |  Browser  |
+                    |  React 18 |
+                    |  Vite     |
+                    +-----+-----+
+                          |
+                     port 3000
+                          |
+                    +-----v-----+       +------------------+
+                    |  NestJS   |------>| Google Gemini AI  |
+                    |  Backend  |       +------------------+
+                    +-----+-----+       +------------------+
+                          |      ------>| freeimage.host    |
+                     port 3001          +------------------+
+                          |
+                    +-----v-----+
+                    | PostgreSQL|
+                    |  (Prisma) |
+                    +-----------+
+```
+
+## Project Structure
+
+```
+CalAIClone/
+|
++-- backend/                        NestJS API server
+|   +-- src/
+|   |   +-- auth/                   JWT authentication, guards, decorators
+|   |   +-- users/                  User CRUD, profile, macro targets
+|   |   +-- meals/                  Meal logging, daily summary, history
+|   |   +-- ai/                     Google Gemini integration (analysis + chat)
+|   |   +-- image/                  Image upload to freeimage.host
+|   |   +-- onboarding/             BMR/TDEE calculation, target recommendations
+|   |   +-- daily-targets/          Per-day custom macro targets
+|   |   +-- chat/                   AI nutrition coach ("Meat Chat")
+|   |   +-- monitoring/             Prometheus metrics, health checks
+|   |   +-- prisma/                 Database client service
+|   |   +-- config/                 Environment config module
+|   |   +-- app.module.ts           Root module
+|   |   +-- main.ts                 Bootstrap (CORS, validation, Swagger)
+|   +-- prisma/
+|   |   +-- schema.prisma           Database schema (User, Meal, DailyTarget)
+|   +-- package.json
+|
++-- frontend/                       React SPA
+|   +-- src/
+|   |   +-- components/
+|   |   |   +-- Login.tsx           Authentication form
+|   |   |   +-- OnboardingFlow.tsx  6-step onboarding wizard
+|   |   |   +-- MacroTargetsCard.tsx Progress bars for macros
+|   |   |   +-- MealsList.tsx       Today's meal list
+|   |   |   +-- AddMealButton.tsx   Camera/file upload trigger
+|   |   |   +-- MealAnalysisModal.tsx AI analysis review modal
+|   |   |   +-- MeatChat.tsx        AI nutrition coach chat
+|   |   |   +-- History.tsx         History list + analytics charts
+|   |   |   +-- Settings.tsx        Macro target management
+|   |   +-- services/
+|   |   |   +-- api.ts              Axios client (auth, meals, onboarding, chat)
+|   |   +-- contexts/
+|   |   |   +-- AuthContext.tsx      Auth state + JWT management
+|   |   +-- monitoring/
+|   |   |   +-- sentry.ts           Sentry/GlitchTip error tracking
+|   |   +-- App.tsx                 Router, dashboard, layout
+|   |   +-- main.tsx                React entry point
+|   +-- package.json
+|
++-- shared/                         Shared TypeScript interfaces
+|   +-- types.ts                    Meal, MealAnalysis, MacroTargets, DailySummary, etc.
+|
++-- tests/                          All tests (separated by scope)
+|   +-- backend_tests/unit/         8 Jest test suites (63 tests)
+|   +-- frontend_tests/             Vitest + React Testing Library
+|   |   +-- unit/                   API service tests
+|   |   +-- components/             Login, MacroTargetsCard tests
+|   +-- e2e_tests/                  6 Playwright specs
+|   |   +-- specs/                  auth, onboarding, dashboard, meals, chat, settings
+|   +-- README.md                   How to run tests
+|
++-- monitoring/                     Observability stack
+|   +-- docker-compose.yml          Prometheus + Grafana + GlitchTip
+|   +-- prometheus/                 Scrape config + alert rules
+|   +-- grafana/                    Dashboards + data source provisioning
+|
++-- docs/                           Analysis & design documents
+    +-- BUSINESS_ANALYSIS.md        Business rules, domain model, risks
+    +-- USE_CASES.md                20 use cases with Mermaid diagrams
+    +-- CLASS_UML.md                Class diagrams + sequence diagrams
+```
+
+## How to Approach the Source
+
+### If you are new to this codebase
+
+1. **Start with the docs** -- Read [Business Analysis](docs/BUSINESS_ANALYSIS.md) for the "why", then [Use Cases](docs/USE_CASES.md) for the "what".
+
+2. **Understand the data model** -- Open `backend/prisma/schema.prisma`. There are only 3 tables: `User`, `Meal`, `DailyTarget`. Everything flows from these.
+
+3. **Trace a request end-to-end** -- Pick the meal logging flow:
+   - Frontend: `AddMealButton.tsx` -> `api.ts:mealsApi.analyzeMeal()` -> `MealAnalysisModal.tsx` -> `api.ts:mealsApi.logMeal()`
+   - Backend: `MealsController.analyzeMeal()` -> `AiService.analyzeMealImage()` -> `MealsController.logMeal()` -> `MealsService.create()` + `getDailySummary()`
+
+4. **Check the class diagrams** -- [Class UML](docs/CLASS_UML.md) shows every service, its dependencies, and the sequence of calls.
+
+### Key entry points
+
+| What | Where |
+|------|-------|
+| Backend bootstrap | `backend/src/main.ts` |
+| All backend routes | `backend/src/*/*.controller.ts` |
+| Business logic | `backend/src/*/*.service.ts` |
+| Database schema | `backend/prisma/schema.prisma` |
+| Frontend entry | `frontend/src/main.tsx` -> `App.tsx` |
+| API client | `frontend/src/services/api.ts` |
+| Auth state | `frontend/src/contexts/AuthContext.tsx` |
+| Shared types | `shared/types.ts` |
+| Swagger docs | http://localhost:3001/api-docs (when running) |
+
+### Module dependency order (read bottom-up)
+
+```
+Prisma -> Users -> DailyTargets -> Meals -> Chat
+                                         -> Onboarding
+Auth (independent, used as guard by all controllers)
+AI (independent, used by Meals + Chat)
+Image (independent, used by Meals)
+Monitoring (independent, global middleware)
+```
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, TypeScript, Vite, Material-UI, Axios |
+| Backend | NestJS 11, TypeScript, Prisma ORM |
+| Database | PostgreSQL |
+| AI | Google Gemini 2.0 Flash Lite |
+| Auth | JWT (bcrypt password hashing) |
+| Monitoring | Prometheus + Grafana (backend), Sentry/GlitchTip (frontend) |
+| Testing | Jest (backend), Vitest (frontend), Playwright (E2E) |
+| API Docs | Swagger/OpenAPI at `/api-docs` |
+
+## Environment Variables
+
+### Backend (`backend/.env`)
+
+```env
+DATABASE_URL=postgresql://user:pass@localhost:5432/calai
+JWT_SECRET=your-jwt-secret
+GOOGLE_AI_API_KEY=your-gemini-api-key
+FREEIMAGE_API_KEY=your-freeimage-key    # optional, has default
+PORT=3001                                # optional, defaults to 3001
+```
+
+### Frontend (`frontend/.env`)
+
+```env
+VITE_SENTRY_DSN=https://key@glitchtip.yourdomain.com/1   # optional
+VITE_ENVIRONMENT=production                                # optional
+```
+
+## Running Tests
+
 ```bash
-npm run dev
+# Backend unit tests (63 tests)
+cd backend && npx jest --config ../tests/backend_tests/jest.config.js
+
+# Frontend unit tests
+cd tests/frontend_tests && npm install && npm test
+
+# E2E tests (requires both servers running)
+cd tests/e2e_tests && npm install && npx playwright install && npm test
 ```
 
-The frontend will run on `http://localhost:3000`
-
-## 📡 API Endpoints
-
-### GET `/api/meals/daily-summary`
-Get today's summary including targets, consumed, remaining, and meals.
-
-**Query Parameters:**
-- `date` (optional): Date in YYYY-MM-DD format
-
-**Response:**
-```json
-{
-  "date": "2024-01-15",
-  "targets": {
-    "calories": 2000,
-    "protein": 150,
-    "carbs": 250,
-    "fats": 65
-  },
-  "consumed": {
-    "calories": 500,
-    "protein": 45,
-    "carbs": 60,
-    "fats": 20
-  },
-  "remaining": {
-    "calories": 1500,
-    "protein": 105,
-    "carbs": 190,
-    "fats": 45
-  },
-  "meals": [...]
-}
-```
-
-### POST `/api/meals/analyze`
-Analyze a meal image using Google AI.
-
-**Request:**
-- Form data with `image` file
-
-**Response:**
-```json
-{
-  "foodItems": ["grilled chicken", "rice", "vegetables"],
-  "calories": 650,
-  "protein": 45,
-  "carbs": 60,
-  "fats": 20,
-  "confidence": 0.85
-}
-```
-
-### POST `/api/meals/log`
-Log a meal to the daily summary.
-
-**Request Body:**
-```json
-{
-  "name": "Grilled Chicken with Rice",
-  "foodItems": ["grilled chicken", "rice"],
-  "calories": 650,
-  "protein": 45,
-  "carbs": 60,
-  "fats": 20
-}
-```
-
-**Response:** Updated daily summary
-
-## 🎯 Usage
-
-1. **Start both servers** (backend on port 3001, frontend on port 3000)
-2. **Open the app** in your browser at `http://localhost:3000`
-3. **View your daily targets** - See calories, protein, carbs, and fats goals
-4. **Take a photo** - Click "Take Photo & Analyze Meal" button
-5. **Review analysis** - The AI will analyze your meal and show nutritional breakdown
-6. **Confirm meal** - Review the projected remaining calories and confirm to add the meal
-7. **Track progress** - See your remaining calories and macros update in real-time
-
-## 🔧 Technology Stack
-
-- **Frontend**: React 18, TypeScript, Vite
-- **Backend**: NestJS, TypeScript
-- **AI**: Google Gemini Pro Vision API
-- **State Management**: React Hooks
-- **HTTP Client**: Axios
-
-## 📝 Notes
-
-- Currently uses in-memory storage (meals are lost on server restart)
-- Default user is "default-user" (authentication not implemented yet)
-- Default targets are 2000 calories, 150g protein, 250g carbs, 65g fats
-- For production, replace in-memory storage with a database (Firebase Firestore, PostgreSQL, etc.)
-
-## 🚧 Future Enhancements
-
-- User authentication (Firebase Auth)
-- Database integration (Firebase Firestore)
-- User profile and personalized targets
-- BMI calculation and goal-based recommendations
-- Weight tracking
-- Historical data and charts
-- Barcode scanning
-- Meal plan suggestions
-
-## 📄 License
+## License
 
 MIT
-
