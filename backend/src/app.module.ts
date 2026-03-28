@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from './config/config.module';
@@ -9,6 +9,8 @@ import { MealsModule } from './meals/meals.module';
 import { DailyTargetsModule } from './daily-targets/daily-targets.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { ChatModule } from './chat/chat.module';
+import { MonitoringModule } from './monitoring/monitoring.module';
+import { MetricsMiddleware } from './monitoring/metrics.middleware';
 
 @Module({
   imports: [
@@ -20,8 +22,13 @@ import { ChatModule } from './chat/chat.module';
     DailyTargetsModule,
     OnboardingModule,
     ChatModule,
+    MonitoringModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(MetricsMiddleware).forRoutes('*');
+  }
+}
