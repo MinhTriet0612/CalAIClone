@@ -74,7 +74,10 @@ api.interceptors.response.use(
     const fullURL = error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown';
     
     // Handle 401 Unauthorized - token is invalid or expired
-    if (error.response?.status === 401 && error.config && !error.config._retry) {
+    // DO NOT reload if we are on the login/register page as 401 there just means "wrong credentials"
+    const isAuthRequest = error.config.url?.includes('/auth/login') || error.config.url?.includes('/auth/register');
+    
+    if (error.response?.status === 401 && error.config && !error.config._retry && !isAuthRequest) {
       error.config._retry = true;
       console.log('🔒 401 Unauthorized - Token invalid or expired');
       console.log('🚪 Clearing auth and redirecting to login...');

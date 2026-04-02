@@ -51,13 +51,21 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    // Validate user
-    const user = await this.validateUser(loginDto.email, loginDto.password);
+    const { email, password } = loginDto;
+    
+    // 1. Check if user exists
+    const user = await this.getUserByEmail(email);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('User not found. Please check your email or sign up.');
     }
 
-    // Generate JWT token
+    // 2. Check if password matches
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Incorrect password. Please try again.');
+    }
+
+    // 3. Generate JWT token
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload);
 
@@ -106,20 +114,5 @@ export class AuthService {
     return this.prisma.user.findUnique({
       where: { email },
     });
-  }
-
-  private async validateUser(email: string, password: string) {
-    const user = await this.getUserByEmail(email);
-    if (!user) {
-      return null;
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return null;
-    }
-
-    const { password: _, ...result } = user;
-    return result;
   }
 }

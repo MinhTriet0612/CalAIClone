@@ -5,14 +5,17 @@ A full-stack calorie tracking application. Users photograph meals, Google Gemini
 ## Quick Start
 
 ```bash
-# 1. Backend
+# 1. Infrastructure (Database)
+docker compose up -d           # Starts PostgreSQL on localhost:5432
+
+# 2. Backend
 cd backend
-cp .env.example .env          # Add GOOGLE_AI_API_KEY, DATABASE_URL, JWT_SECRET
+cp .env.example .env          # Add GOOGLE_AI_API_KEY
 npm install
-npx prisma migrate deploy
+npx prisma migrate dev
 npm run start:dev              # http://localhost:3001
 
-# 2. Frontend
+# 3. Frontend
 cd frontend
 npm install
 npm run dev                    # http://localhost:3000

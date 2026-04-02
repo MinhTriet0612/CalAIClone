@@ -60,6 +60,7 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 ## 5. Key Business Rules
 
 ### BR-1: Onboarding & Target Calculation
+
 - New users MUST complete onboarding before accessing the dashboard.
 - BMR is calculated via Mifflin-St Jeor equation, adjusted by activity level (TDEE).
 - Goal modifiers: weight_loss/cutting = -500 kcal; muscle_gain = +500 kcal; maintenance/health = TDEE.
@@ -68,33 +69,39 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 - Onboarding is considered complete when user targets differ from defaults (2000/150/250/65).
 
 ### BR-2: Meal Analysis
+
 - Only images containing food are accepted; non-food images are rejected (`isFood: false`).
 - AI returns: food items, calories, protein, carbs, fats, healthScore, confidence.
 - Health score is clamped to 1-10 range.
 - If AI fails, the error is surfaced to the user; the meal is NOT logged.
 
 ### BR-3: Meal Logging
+
 - A meal is always associated with the current date/time.
 - After logging, the daily summary is recalculated and returned.
 - Health score: use AI-provided score if available, otherwise calculate from macro ratios.
 
 ### BR-4: Daily Targets
+
 - Each date can have its own daily target (overrides user defaults).
 - If no daily target exists for a date, one is auto-created from user defaults.
 - Remaining = max(0, target - consumed). Never negative.
 
 ### BR-5: Authentication & Authorization
+
 - JWT-based authentication. Tokens include user ID, email, role.
 - Two roles: `user` (default), `admin`.
 - Role-based endpoints: only admin can change user roles.
 - Token is stored in localStorage; 401 responses trigger automatic logout.
 
 ### BR-6: History & Analytics
+
 - Users can view daily summaries for any date range.
 - Only dates with actual data (meals or custom targets) are returned.
 - History is sorted most-recent-first.
 
 ### BR-7: AI Chat Coach
+
 - The "Meat Coach" provides nutrition coaching focused on proteins/meats.
 - Chat includes the user's current daily summary as context.
 - Responses are limited to 180 words, plain text only.

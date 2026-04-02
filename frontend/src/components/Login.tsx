@@ -22,7 +22,8 @@ export function Login() {
         await login(email, password);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to authenticate');
+      const msg = err.response?.data?.message || err.message || 'Failed to authenticate';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -37,8 +38,9 @@ export function Login() {
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email</label>
+            <label htmlFor="email">Email</label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -48,8 +50,9 @@ export function Login() {
           </div>
 
           <div className="form-group">
-            <label>Password</label>
+            <label htmlFor="password">Password</label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

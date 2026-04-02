@@ -11,6 +11,7 @@ import { OnboardingModule } from './onboarding/onboarding.module';
 import { ChatModule } from './chat/chat.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { MetricsMiddleware } from './monitoring/metrics.middleware';
+import { LoggingMiddleware } from './common/middleware/logging.middleware';
 
 @Module({
   imports: [
@@ -29,6 +30,6 @@ import { MetricsMiddleware } from './monitoring/metrics.middleware';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(MetricsMiddleware).forRoutes('*');
+    consumer.apply(MetricsMiddleware, LoggingMiddleware).forRoutes('*');
   }
 }
