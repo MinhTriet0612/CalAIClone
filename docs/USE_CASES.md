@@ -32,14 +32,12 @@ graph TB
     end
 
     subgraph "Daily Targets"
-        UC12[UC-12: View Daily Targets]
         UC13[UC-13: Set Custom Daily Targets]
         UC14[UC-14: Delete Custom Daily Targets]
     end
 
     subgraph "User Management"
-        UC15[UC-15: View Profile]
-        UC16[UC-16: Update Profile]
+        UC15[UC-15: Manage User Profile]
         UC17[UC-17: Update Macro Targets]
         UC18[UC-18: Update User Role]
     end
@@ -61,11 +59,9 @@ graph TB
     U --> UC9
     U --> UC10
     U --> UC11
-    U --> UC12
     U --> UC13
     U --> UC14
     U --> UC15
-    U --> UC16
     U --> UC17
     U --> UC19
     U --> UC20
@@ -138,8 +134,10 @@ graph TB
 | **Actor** | User (new) |
 | **Precondition** | User is authenticated; targets are defaults (2000/150/250/65) |
 | **Trigger** | App detects default targets on login |
+| **Relationships** | `<<include>>` UC-6 (Calculate), UC-7 (Approve) |
 | **Main Flow** | 1. Step 1: Select gender (male/female/other)<br>2. Step 2: Enter height (cm)<br>3. Step 3: Enter weight (kg)<br>4. Step 4: Enter birth date + workouts per week<br>5. Step 5: Select goal (weight_loss/muscle_gain/maintenance/cutting/health)<br>6. System calculates recommendations (UC-6)<br>7. Step 6: User reviews and approves targets (UC-7) |
-| **Postcondition** | User has custom macro targets; daily target created for today |
+| **Postcondition** | User Profile entry in DB is fully populated; OnboardingStatus=Complete |
+| **Exception** | E1: User exits before Step 6 -> No changes persisted to targets or profile metrics. |
 
 ---
 
@@ -170,10 +168,11 @@ graph TB
 |-------|-------|
 | **Actor** | User, Google Gemini AI, Image Host |
 | **Precondition** | User is authenticated |
+| **Actor** | User, Google Gemini AI (External), Image Host (External) |
 | **Trigger** | User takes/uploads a meal photo |
 | **Main Flow** | 1. Frontend sends image as multipart/form-data<br>2. Backend converts image to base64<br>3. Backend sends image + prompt to Gemini AI<br>4. AI returns JSON: { isFood, foodItems, calories, protein, carbs, fats, healthScore, confidence }<br>5. If isFood=true, backend uploads image to freeimage.host<br>6. Backend returns analysis with imageUrl |
-| **Postcondition** | Analysis displayed in modal for user confirmation |
-| **Exception** | E1: isFood=false -> Frontend shows "No food detected" alert<br>E2: AI fails -> Error message shown<br>E3: Image upload fails -> Continue without imageUrl |
+| **Postcondition** | Analysis JSON returned to frontend; temporary ImageURL generated |
+| **Exception** | E1: isFood=false -> Frontend shows "No food detected" alert<br>E2: AI Timeout -> System prompts user to try again or enter manually<br>E3: Image upload fails -> System continues with analysis result but sets `imageUrl` to null |
 
 ---
 
@@ -211,12 +210,8 @@ graph TB
 
 ---
 
-### UC-12: View Daily Targets
-
-| Field | Value |
-|-------|-------|
-| **Actor** | User |
-| **Main Flow** | 1. Request GET /api/daily-targets?date=YYYY-MM-DD<br>2. If custom target exists, return it<br>3. If not, auto-create from user defaults (if autoCreate=true)<br>4. Return { calories, protein, carbs, fats } |
+| **Main Flow** | 1. Frontend requests GET /api/meals/daily-summary?date=YYYY-MM-DD<br>2. Backend fetches meals for the date<br>3. Backend fetches/auto-creates daily target (Includes User Defaults or Custom Target)<br>4. Backend calculates consumed (sum of meals) and remaining (target - consumed, min 0)<br>5. Returns { date, targets, consumed, remaining, meals } |
+| **Postcondition** | Dashboard shows macro progress bars and meal list; Target values are mapped correctly. |
 
 ---
 
@@ -225,8 +220,9 @@ graph TB
 | Field | Value |
 |-------|-------|
 | **Actor** | User |
-| **Main Flow** | 1. User provides date + custom targets + optional healthScore<br>2. Backend upserts DailyTarget record<br>3. HealthScore clamped to 1-10 |
-| **Postcondition** | Date has custom targets overriding user defaults |
+| **Main Flow** | 1. User provides date + custom targets + optional healthScore<br>2. Backend validates that values are positive numbers<br>3. Backend upserts DailyTarget record<br>4. HealthScore clamped to 1-10 |
+| **Postcondition** | DailyTarget entry created/updated for the specified date; user-specific default targets are ignored for that date. |
+| **Exception** | E1: Invalid input (negative numbers) -> System returns 400 Bad Request. |
 
 ---
 
@@ -235,25 +231,20 @@ graph TB
 | Field | Value |
 |-------|-------|
 | **Actor** | User |
-| **Main Flow** | 1. User requests deletion for a date<br>2. Backend deletes DailyTarget record<br>3. System reverts to user defaults for that date |
+| **Main Flow** | 1. User requests deletion of custom target for a date<br>2. Backend deletes DailyTarget record from DB<br>3. System reverts to using user's global defaults for that date |
+| **Postcondition** | Custom DailyTarget record removed; system fallback to global targets active. |
+| **Exception** | E1: No custom target exists for that date -> System returns 404/Success (Idempotent). |
 
 ---
 
-### UC-15: View Profile
+### UC-15: Manage User Profile
 
 | Field | Value |
 |-------|-------|
 | **Actor** | User |
-| **Main Flow** | 1. GET /api/users/me<br>2. Returns user profile + targets + metadata |
-
----
-
-### UC-16: Update Profile
-
-| Field | Value |
-|-------|-------|
-| **Actor** | User |
-| **Main Flow** | 1. PUT /api/users/profile<br>2. Updates age, gender, height, weight, activityLevel, goal, dietaryPreferences |
+| **Main Flow** | 1. User navigates to Settings/Profile<br>2. System displays current info (height, weight, age, etc.) via `GET /api/users/me`<br>3. User modifies any field<br>4. User clicks "Save"<br>5. System validates and updates DB via `PUT /api/users/profile` |
+| **Postcondition** | User metadata updated in DB |
+| **Exception** | E1: Validation error (e.g. invalid weight) -> System returns 400. |
 
 ---
 
@@ -283,8 +274,9 @@ graph TB
 |-------|-------|
 | **Actor** | User, Google Gemini AI |
 | **Trigger** | User navigates to Meat Chat and sends a message |
-| **Main Flow** | 1. Frontend sends prompt + conversation history<br>2. Backend loads user's current daily summary<br>3. Backend builds prompt with: guardrails, client stats, history, user message<br>4. Gemini generates coaching response (<= 180 words, plain text)<br>5. Backend strips any markdown from response<br>6. Returns { reply } |
-| **Postcondition** | Chat message displayed to user |
+| **Main Flow** | 1. Frontend sends prompt + conversation history<br>2. Backend loads user's current daily summary (UC-10)<br>3. Backend builds prompt with: guardrails, client stats, history, user message<br>4. Gemini generates coaching response (<= 180 words, plain text)<br>5. Backend strips any markdown from response<br>6. Returns { reply } |
+| **Postcondition** | Chat message displayed in UI; summary session context updated |
+| **Exception** | E1: User asks for medical/pharmaceutical advice -> System triggers "Medical Disclaimer" guardrail response<br>E2: Gemini safety filter trigger -> Generic "I cannot answer this" response |
 
 ---
 
