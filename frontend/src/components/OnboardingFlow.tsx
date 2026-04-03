@@ -18,7 +18,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     height: 175,
     weight: 70,
     birthDate: new Date(new Date().setFullYear(new Date().getFullYear() - 30)).toISOString().split('T')[0],
-    workoutsPerWeek: 3,
+    workoutsPerWeek: 4,
     goal: 'weight_loss',
   });
 
@@ -47,7 +47,10 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     setLoading(true);
     setError('');
     try {
-      await onboardingApi.approveRecommendations(recommendations);
+      await onboardingApi.approveRecommendations({
+        ...recommendations,
+        ...formData,
+      });
       onComplete();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to save recommendations');
@@ -92,8 +95,9 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             <h2>Height & Weight</h2>
             <p className="subtitle">This will be used to calibrate your custom plan.</p>
             <div className="form-group">
-              <label>Height (cm)</label>
+              <label htmlFor="height">Height (cm)</label>
               <input
+                id="height"
                 type="number"
                 value={formData.height}
                 onChange={(e) => setFormData({ ...formData, height: parseInt(e.target.value) || 0 })}
@@ -102,8 +106,9 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               />
             </div>
             <div className="form-group">
-              <label>Weight (kg)</label>
+              <label htmlFor="weight">Weight (kg)</label>
               <input
+                id="weight"
                 type="number"
                 value={formData.weight}
                 onChange={(e) => setFormData({ ...formData, weight: parseInt(e.target.value) || 0 })}
@@ -120,8 +125,9 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             <h2>When were you born?</h2>
             <p className="subtitle">This will be used to calibrate your custom plan.</p>
             <div className="form-group">
-              <label>Birth Date</label>
+              <label htmlFor="birthDate">Birth Date</label>
               <input
+                id="birthDate"
                 type="date"
                 value={formData.birthDate}
                 onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
@@ -139,7 +145,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
             <div className="option-list">
               {[
                 { label: '0-2 Workouts / week', value: 1 },
-                { label: '3-5 Workouts / week', value: 3 },
+                { label: '3-5 Workouts / week', value: 4 },
                 { label: '6+ Dedicated athlete', value: 6 },
               ].map((option) => (
                 <button

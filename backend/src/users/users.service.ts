@@ -37,6 +37,8 @@ export class UsersService {
         gender: true,
         height: true,
         weight: true,
+        birthDate: true,
+        workoutsPerWeek: true,
         activityLevel: true,
         goal: true,
         targetWeight: true,
@@ -73,7 +75,7 @@ export class UsersService {
     return result;
   }
 
-  async updateUserProfile(userId: string, profile: UserProfile): Promise<void> {
+  async updateUserProfile(userId: string, profile: Partial<UserProfile>): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
       data: {
@@ -81,6 +83,8 @@ export class UsersService {
         gender: profile.gender,
         height: profile.height,
         weight: profile.weight,
+        birthDate: profile.birthDate,
+        workoutsPerWeek: profile.workoutsPerWeek,
         activityLevel: profile.activityLevel,
         goal: profile.goal,
         targetWeight: profile.targetWeight,

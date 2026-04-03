@@ -43,10 +43,12 @@ export interface DailySummary {
 }
 
 export interface UserProfile {
+  birthDate?: Date;
   age: number;
   gender: 'male' | 'female' | 'other';
   height: number; // cm
   weight: number; // kg
+  workoutsPerWeek?: number;
   activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
   goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health';
   targetWeight?: number;

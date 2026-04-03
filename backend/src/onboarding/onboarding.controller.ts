@@ -80,6 +80,7 @@ export class OnboardingController {
     @User() user: UserPayload,
     @Body() targets: ApproveRecommendationsDto,
   ) {
+    console.log('[Onboarding] Received targets:', targets);
     const normalizedTargets = {
       calories: targets.calories,
       protein: targets.protein,
@@ -87,14 +88,62 @@ export class OnboardingController {
       fats: targets.fats,
     };
 
+    // 1. Update user targets
     await this.usersService.updateUserTargets(user.id, normalizedTargets);
+
+    // 2. Update user profile metrics (UC-5 Persistence Fix)
+    if (targets.gender || targets.height || targets.weight || targets.birthDate) {
+      // Map workouts per week to activity level if provided
+      let activityLevel: string | undefined = undefined;
+      if (targets.workoutsPerWeek !== undefined) {
+        activityLevel = targets.workoutsPerWeek <= 2 ? 'sedentary' : 
+                        targets.workoutsPerWeek <= 5 ? 'moderate' : 'very_active';
+      }
+
+      // Calculate age if birthDate provided
+      let age: number | undefined = undefined;
+      let birthDateObj: Date | undefined = undefined;
+      if (targets.birthDate) {
+        birthDateObj = new Date(targets.birthDate);
+        const today = new Date();
+        age = today.getFullYear() - birthDateObj.getFullYear();
+        const m = today.getMonth() - birthDateObj.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDateObj.getDate())) {
+          age--;
+        }
+      }
+
+      console.log('[Onboarding] Profile Update Payload:', {
+        gender: targets.gender,
+        height: targets.height,
+        weight: targets.weight,
+        age: age,
+        birthDate: birthDateObj,
+        workoutsPerWeek: targets.workoutsPerWeek,
+        activityLevel: activityLevel,
+        goal: targets.goal,
+      });
+
+      await this.usersService.updateUserProfile(user.id, {
+        gender: targets.gender,
+        height: targets.height,
+        weight: targets.weight,
+        age: age,
+        birthDate: birthDateObj,
+        workoutsPerWeek: targets.workoutsPerWeek,
+        activityLevel: activityLevel as any,
+        goal: targets.goal,
+      });
+
+      console.log('[Onboarding] Profile updated successfully');
+    }
 
     const today = new Date();
     const todayKey = today.toISOString().split('T')[0];
     await this.dailyTargetsService.setDailyTargets(user.id, todayKey, normalizedTargets);
 
     return {
-      message: 'Recommendations saved successfully',
+      message: 'Recommendations and profile saved successfully',
       targets: normalizedTargets,
     };
   }

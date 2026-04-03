@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, Min } from 'class-validator';
+import { IsNumber, Min, IsOptional, IsString } from 'class-validator';
 
 export class ApproveRecommendationsDto {
   @ApiProperty({
@@ -37,5 +37,35 @@ export class ApproveRecommendationsDto {
   @IsNumber()
   @Min(20)
   fats: number;
+
+  @ApiProperty({ example: 'male', enum: ['male', 'female', 'other'] })
+  @IsOptional()
+  @IsString()
+  gender?: 'male' | 'female' | 'other';
+
+  @ApiProperty({ example: 175 })
+  @IsOptional()
+  @IsNumber()
+  height?: number;
+
+  @ApiProperty({ example: 70 })
+  @IsOptional()
+  @IsNumber()
+  weight?: number;
+
+  @ApiProperty({ example: '1995-01-01' })
+  @IsOptional()
+  @IsString()
+  birthDate?: string;
+
+  @ApiProperty({ example: 'weight_loss' })
+  @IsOptional()
+  @IsString()
+  goal?: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health';
+
+  @ApiProperty({ example: 3 })
+  @IsOptional()
+  @IsNumber()
+  workoutsPerWeek?: number;
 }
 

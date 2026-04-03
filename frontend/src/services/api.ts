@@ -191,7 +191,7 @@ export const onboardingApi = {
   },
 
   // Approve and save recommendations
-  approveRecommendations: async (targets: MacroTargets): Promise<{ message: string; targets: MacroTargets }> => {
+  approveRecommendations: async (targets: MacroTargets & Partial<OnboardingData>): Promise<{ message: string; targets: MacroTargets }> => {
     const response = await api.post('/onboarding/approve', targets);
     return response.data;
   },

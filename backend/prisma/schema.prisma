@@ -18,10 +18,12 @@ model User {
 
   // Profile
   age                Int?
+  birthDate          DateTime?
   gender             String? // "male" | "female" | "other"
   height             Float? // cm
   weight             Float? // kg
   activityLevel      String? // "sedentary" | "light" | "moderate" | "active" | "very_active"
+  workoutsPerWeek    Int?
   goal               String? // "weight_loss" | "muscle_gain" | "maintenance" | "cutting" | "health"
   targetWeight       Float?
   targetDate         DateTime?

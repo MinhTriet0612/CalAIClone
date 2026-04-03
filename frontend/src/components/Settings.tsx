@@ -25,7 +25,7 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
     height: 175,
     weight: 70,
     birthDate: defaultBirthDate,
-    workoutsPerWeek: 3,
+    workoutsPerWeek: 4,
     goal: 'maintenance',
   });
 
@@ -40,6 +40,19 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
           carbs: profile.targetCarbs,
           fats: profile.targetFats,
         });
+        
+        // Sync formData with profile (UC-5 Persistence Fix)
+        if (profile.gender) {
+          setFormData(prev => ({
+            ...prev,
+            gender: profile.gender,
+            height: profile.height ?? prev.height,
+            weight: profile.weight ?? prev.weight,
+            workoutsPerWeek: profile.workoutsPerWeek ?? prev.workoutsPerWeek,
+            birthDate: profile.birthDate ? new Date(profile.birthDate).toISOString().split('T')[0] : prev.birthDate,
+            goal: profile.goal ?? prev.goal,
+          }));
+        }
       } catch (err: any) {
         console.error('Failed to load profile', err);
         setError(err.response?.data?.message || 'Unable to load user profile');
@@ -74,10 +87,11 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
   const handleApprove = async () => {
     if (!recommendations) return;
     try {
-      setSaving(true);
-      setError('');
-      await onboardingApi.approveRecommendations(recommendations);
-      setSuccess('Daily targets updated!');
+      await onboardingApi.approveRecommendations({
+        ...recommendations,
+        ...formData,
+      });
+      setSuccess('Daily targets and profile updated!');
       setCurrentTargets(recommendations);
       setShowModal(false);
       await onTargetsUpdated();
@@ -152,24 +166,26 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
           </div>
 
           <div className="form-grid">
-            <div className="form-field">
-              <label>Height (cm)</label>
+            <div className="form-group">
+              <label htmlFor="settings-height">Height (cm)</label>
               <input
+                id="settings-height"
                 type="number"
                 value={formData.height}
-                min={120}
-                max={250}
-                onChange={(e) => handleInputChange('height', Number(e.target.value))}
+                onChange={(e) => setFormData({ ...formData, height: parseInt(e.target.value) || 0 })}
+                min="100"
+                max="250"
               />
             </div>
-            <div className="form-field">
-              <label>Weight (kg)</label>
+            <div className="form-group">
+              <label htmlFor="settings-weight">Weight (kg)</label>
               <input
+                id="settings-weight"
                 type="number"
                 value={formData.weight}
-                min={35}
-                max={250}
-                onChange={(e) => handleInputChange('weight', Number(e.target.value))}
+                onChange={(e) => setFormData({ ...formData, weight: parseInt(e.target.value) || 0 })}
+                min="30"
+                max="300"
               />
             </div>
           </div>
