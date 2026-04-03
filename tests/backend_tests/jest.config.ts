@@ -1,17 +1,23 @@
-import type { Config } from 'jest';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const config: Config = {
   displayName: 'backend-unit',
   rootDir: path.resolve(__dirname, '../../'),
   testMatch: ['<rootDir>/tests/backend_tests/unit/**/*.spec.ts'],
   transform: {
-    '^.+\\.ts$': ['ts-jest', {
+    '^.+\\.ts$': [path.resolve(__dirname, '../../backend/node_modules/ts-jest/dist/index.js'), {
       tsconfig: path.resolve(__dirname, '../../backend/tsconfig.json'),
     }],
   },
   transformIgnorePatterns: ['/node_modules/'],
-  modulePaths: [path.resolve(__dirname, '../../backend')],
+  modulePaths: [
+    path.resolve(__dirname, '../../backend'),
+    path.resolve(__dirname, '../../backend/node_modules')
+  ],
   moduleFileExtensions: ['ts', 'js', 'json'],
   testEnvironment: 'node',
   collectCoverageFrom: [

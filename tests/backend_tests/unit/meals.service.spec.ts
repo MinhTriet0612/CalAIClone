@@ -136,6 +136,85 @@ describe('MealsService', () => {
         }),
       });
     });
+
+    describe('calculateHealthScore detailed logic (SQA McCabe Compliance)', () => {
+      const baseUserData = { userId: 'user-1' };
+
+      it('Path 3: should add 1.5 bonus for high protein ratio (> 0.25)', async () => {
+        const dto = {
+          name: 'High Protein',
+          foodItems: ['Chicken'],
+          calories: 400,
+          protein: 30, // 30*4 = 120 cal. 120/400 = 0.3 ( > 0.25)
+          carbs: 40,
+          fats: 13, // 13*9 = 117 cal. 117/400 = 0.29 (in 0.2-0.35 range -> +1)
+        };
+        // Score: 5 (base) + 1.5 (protein) + 1 (fat) = 7.5 -> round 8
+        mockPrisma.meal.create.mockImplementation((args) => Promise.resolve({ ...args.data, id: '1', date: new Date() }));
+        const result = await service.create(dto as any, baseUserData.userId);
+        expect(result.healthScore).toBe(8);
+      });
+
+      it('Path 4: should add 0.5 bonus for moderate protein ratio (> 0.15)', async () => {
+        const dto = {
+          name: 'Mid Protein',
+          foodItems: ['Eggs'],
+          calories: 400,
+          protein: 20, // 20*4 = 80. 80/400 = 0.2 ( in 0.15-0.25 range -> +0.5)
+          carbs: 50,
+          fats: 13, // 13*9 = 117. 117/400 = 0.29 (+1)
+        };
+        // Score: 5 + 0.5 + 1 = 6.5 -> round 7
+        mockPrisma.meal.create.mockImplementation((args) => Promise.resolve({ ...args.data, id: '2', date: new Date() }));
+        const result = await service.create(dto as any, baseUserData.userId);
+        expect(result.healthScore).toBe(7);
+      });
+
+      it('Path 5/6: should handle non-optimal fat ratios (e.g. too high > 0.5)', async () => {
+        const dto = {
+          name: 'High Fat',
+          foodItems: ['Oil'],
+          calories: 400,
+          protein: 10, // 10*4 = 40. 40/400 = 0.1 (low)
+          carbs: 5,
+          fats: 25, // 25*9 = 225. 225/400 = 0.56 (> 0.5 -> penalty -1)
+        };
+        // Score: 5 + 0 (protein) - 1 (fat) = 4
+        mockPrisma.meal.create.mockImplementation((args) => Promise.resolve({ ...args.data, id: '3', date: new Date() }));
+        const result = await service.create(dto as any, baseUserData.userId);
+        expect(result.healthScore).toBe(4);
+      });
+
+      it('Path 8: should add 0.5 bonus for light meals (< 300 kcal)', async () => {
+        const dto = {
+          name: 'Light Snack',
+          foodItems: ['Apple'],
+          calories: 200, // < 300 (+0.5)
+          protein: 5, // 20/200 = 0.1
+          carbs: 40,
+          fats: 2, // 18/200 = 0.09
+        };
+        // Score: 5 + 0 (protein) + 0 (fat) + 0.5 (cal) = 5.5 -> round 6
+        mockPrisma.meal.create.mockImplementation((args) => Promise.resolve({ ...args.data, id: '4', date: new Date() }));
+        const result = await service.create(dto as any, baseUserData.userId);
+        expect(result.healthScore).toBe(6);
+      });
+
+      it('Path 9: should apply 0.5 penalty for heavy meals (> 1000 kcal)', async () => {
+        const dto = {
+          name: 'Heavy Feast',
+          foodItems: ['Burger'],
+          calories: 1200, // > 1000 (-0.5)
+          protein: 50, // 200/1200 < 0.15
+          carbs: 200,
+          fats: 25, // 225/1200 < 0.2
+        };
+        // Score: 5 + 0 + 0 - 0.5 = 4.5 -> round 5
+        mockPrisma.meal.create.mockImplementation((args) => Promise.resolve({ ...args.data, id: '5', date: new Date() }));
+        const result = await service.create(dto as any, baseUserData.userId);
+        expect(result.healthScore).toBe(5);
+      });
+    });
   });
 
   describe('findAll', () => {
