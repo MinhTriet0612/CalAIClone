@@ -4,8 +4,8 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -14,13 +14,13 @@
 }
 
 .daily-modal {
-  background-color: #1c1c1e;
+  background-color: #ffffff;
   width: 90%;
   max-width: 450px;
   border-radius: 20px;
   padding: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   animation: slideUp 0.3s ease;
 }
 
@@ -34,13 +34,14 @@
 .modal-header h3 {
   margin: 0;
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: #1c1c1e;
 }
 
 .close-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: #f2f2f7;
   border: none;
-  color: #fff;
+  color: #1c1c1e;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -49,6 +50,11 @@
   align-items: center;
   justify-content: center;
   font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: #e5e5ea;
 }
 
 .modal-body {
@@ -56,7 +62,7 @@
 }
 
 .modal-body .hint {
-  color: rgba(255, 255, 255, 0.5);
+  color: #8e8e93;
   font-size: 0.9rem;
   margin-bottom: 20px;
 }
@@ -68,17 +74,18 @@
 .target-input-group label {
   display: block;
   font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: #8e8e93;
   margin-bottom: 6px;
+  font-weight: 500;
 }
 
 .target-input-group input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #f2f2f7;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 12px;
   padding: 12px;
-  color: #fff;
+  color: #1c1c1e;
   font-size: 1.1rem;
   font-weight: 500;
   transition: all 0.2s;
@@ -87,7 +94,8 @@
 .target-input-group input:focus {
   outline: none;
   border-color: #007aff;
-  background: rgba(0, 122, 255, 0.1);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
 }
 
 .macros-input-grid {
@@ -117,9 +125,9 @@
 }
 
 .btn-cancel {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
+  background: #f2f2f7;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  color: #1c1c1e;
 }
 
 .btn-save {
@@ -130,6 +138,7 @@
 
 .btn-save:hover {
   background: #0063cc;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 }
 
 .btn-reset {
@@ -143,7 +152,7 @@
 }
 
 .btn-reset:hover {
-  background: rgba(255, 59, 48, 0.1);
+  background: rgba(255, 59, 48, 0.05);
 }
 
 .modal-alert {
@@ -154,27 +163,17 @@
 }
 
 .modal-alert.error {
-  background: rgba(255, 59, 48, 0.15);
+  background: #ff3b301a;
   color: #ff3b30;
-  border: 1px solid rgba(255, 59, 48, 0.2);
+  border: 1px solid #ff3b3033;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
