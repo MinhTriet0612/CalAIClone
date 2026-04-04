@@ -1,14 +1,27 @@
+import { useState } from 'react';
 import { MacroTargets } from '../../../shared/types';
+import { DailyTargetModal } from './DailyTargetModal';
 import './MacroTargetsCard.css';
 
 interface MacroTargetsCardProps {
+  date: string;
   targets: MacroTargets;
   consumed: MacroTargets;
   remaining: MacroTargets;
   healthScore?: number;
+  onTargetsUpdated?: (newTargets: MacroTargets) => void;
 }
 
-export function MacroTargetsCard({ targets, consumed, remaining, healthScore }: MacroTargetsCardProps) {
+export function MacroTargetsCard({ 
+  date, 
+  targets, 
+  consumed, 
+  remaining, 
+  healthScore,
+  onTargetsUpdated 
+}: MacroTargetsCardProps) {
+  const [showEditModal, setShowEditModal] = useState(false);
+
   const getHealthScoreColor = (score?: number) => {
     if (!score) return '#999';
     if (score >= 8) return '#4CAF50'; // Green
@@ -69,7 +82,16 @@ export function MacroTargetsCard({ targets, consumed, remaining, healthScore }: 
   return (
     <div className="macro-targets-card">
       <div className="card-header">
-        <h2>Today's Goals</h2>
+        <div className="title-area">
+          <h2>Daily Goals</h2>
+          <button 
+            className="edit-targets-btn" 
+            onClick={() => setShowEditModal(true)}
+            title="Edit target for this day"
+          >
+            ✎
+          </button>
+        </div>
         {healthScore !== undefined && (
           <div className="health-score-badge" style={{ backgroundColor: getHealthScoreColor(healthScore) }}>
             <span className="health-score-value">{healthScore.toFixed(1)}</span>
@@ -87,32 +109,46 @@ export function MacroTargetsCard({ targets, consumed, remaining, healthScore }: 
         color="blue"
       />
 
-      <MacroBar
-        label="Protein"
-        target={targets.protein}
-        consumed={consumed.protein}
-        remaining={remaining.protein}
-        unit="g"
-        color="purple"
-      />
+      <div className="macros-grid">
+        <MacroBar
+          label="Protein"
+          target={targets.protein}
+          consumed={consumed.protein}
+          remaining={remaining.protein}
+          unit="g"
+          color="purple"
+        />
 
-      <MacroBar
-        label="Carbs"
-        target={targets.carbs}
-        consumed={consumed.carbs}
-        remaining={remaining.carbs}
-        unit="g"
-        color="yellow"
-      />
+        <MacroBar
+          label="Carbs"
+          target={targets.carbs}
+          consumed={consumed.carbs}
+          remaining={remaining.carbs}
+          unit="g"
+          color="yellow"
+        />
 
-      <MacroBar
-        label="Fats"
-        target={targets.fats}
-        consumed={consumed.fats}
-        remaining={remaining.fats}
-        unit="g"
-        color="green"
-      />
+        <MacroBar
+          label="Fats"
+          target={targets.fats}
+          consumed={consumed.fats}
+          remaining={remaining.fats}
+          unit="g"
+          color="green"
+        />
+      </div>
+
+      {showEditModal && (
+        <DailyTargetModal
+          date={date}
+          currentKcal={targets.calories}
+          initialTargets={targets}
+          onClose={() => setShowEditModal(false)}
+          onUpdated={(newTargets) => {
+            onTargetsUpdated?.(newTargets);
+          }}
+        />
+      )}
     </div>
   );
 }

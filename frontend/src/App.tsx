@@ -185,10 +185,14 @@ function AppContent() {
   const dashboard = (
     <div className="dashboard">
       <MacroTargetsCard
+        date={dailySummary.date}
         targets={dailySummary.targets}
         consumed={dailySummary.consumed}
         remaining={dailySummary.remaining}
         healthScore={dailySummary.healthScore}
+        onTargetsUpdated={async () => {
+          await loadDailySummary();
+        }}
       />
 
       <MealsList meals={dailySummary.meals} />

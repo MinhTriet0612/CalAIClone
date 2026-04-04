@@ -34,14 +34,13 @@ graph TB
     subgraph "User Management"
         UC12[UC-12: Manage User Profile]
         UC13[UC-13: Update Global Macro Targets]
-    end
-
-    subgraph "AI Coach"
-        UC14[UC-14: Chat with Nutrition Coach]
+        UC14[UC-14: Set Custom Daily Target]
     end
 
     subgraph "Settings"
-        UC15[UC-15: Recalculate Plans]
+        UC15[UC-15: Reset Daily Target]
+        UC16[UC-16: Chat with Nutrition Coach]
+        UC17[UC-17: Recalculate Plans]
     end
 
     U --> UC1
@@ -57,13 +56,16 @@ graph TB
     U --> UC13
     U --> UC14
     U --> UC15
+    U --> UC16
+    U --> UC17
 
     UC5 --> UC6
     UC5 --> UC7
     UC8 --> AI
     UC8 --> IMG
-    UC14 --> AI
-    UC15 --> UC6
+    UC14 --> UC10
+    UC16 --> AI
+    UC17 --> UC6
 ```
 
 ---
@@ -217,10 +219,34 @@ graph TB
 |-------|-------|
 | **Actor** | User |
 | **Main Flow** | 1. User enters custom calories/protein/carbs/fats in Settings<br>2. Backend updates User model defaults |
+| **Postcondition** | Default targets updated for all future days |
 
 ---
 
-### UC-14: Chat with Nutrition Coach
+### UC-14: Set Custom Daily Target
+
+| Field | Value |
+|-------|-------|
+| **Actor** | User |
+| **Precondition** | User is on the Dashboard |
+| **Trigger** | User clicks the "Edit" icon next to Daily Goals |
+| **Main Flow** | 1. System opens DailyTargetModal<br>2. User enters custom calories/macros for the current date<br>3. System calls `PUT /api/daily-targets?date=YYYY-MM-DD`<br>4. Dashboard refreshes to show adjusted goals |
+| **Postcondition** | Targets for the selected date are overridden |
+
+---
+
+### UC-15: Reset Daily Target to Default
+
+| Field | Value |
+|-------|-------|
+| **Actor** | User |
+| **Trigger** | User clicks "Reset to Default" in DailyTargetModal |
+| **Main Flow** | 1. System calls `DELETE /api/daily-targets?date=YYYY-MM-DD`<br>2. Backend removes override record<br>3. System falls back to User Global Defaults (UC-13)<br>4. Dashboard refreshes |
+| **Postcondition** | Daily goals revert to global plan |
+
+---
+
+### UC-16: Chat with Nutrition Coach
 
 | Field | Value |
 |-------|-------|
@@ -232,7 +258,7 @@ graph TB
 
 ---
 
-### UC-15: Recalculate Plans
+### UC-17: Recalculate Plans
 
 | Field | Value |
 |-------|-------|
@@ -260,5 +286,7 @@ graph TB
 | UC-11 View Meal History | X | | | |
 | UC-12 Manage User Profile | X | | | |
 | UC-13 Update Macro Targets | X | | | |
-| UC-14 Chat with Coach | X | | X | |
-| UC-15 Recalculate Plans | X | | | |
+| UC-14 Set Custom Daily Target | X | | | |
+| UC-15 Reset Daily Target | X | | | |
+| UC-16 Chat with Coach | X | | X | |
+| UC-17 Recalculate Plans | X | | | |

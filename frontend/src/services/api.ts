@@ -212,4 +212,24 @@ export const chatApi = {
   },
 };
 
+export const dailyTargetsApi = {
+  // Get targets for a date
+  getTargets: async (date: string): Promise<MacroTargets> => {
+    const response = await api.get<MacroTargets>('/daily-targets', { params: { date } });
+    return response.data;
+  },
+
+  // Set/Update targets for a date
+  setTargets: async (date: string, targets: MacroTargets & { healthScore?: number }) => {
+    const response = await api.put('/daily-targets', targets, { params: { date } });
+    return response.data;
+  },
+
+  // Reset targets for a date to defaults
+  deleteTargets: async (date: string) => {
+    const response = await api.delete('/daily-targets', { params: { date } });
+    return response.data;
+  },
+};
+
 export default api;
