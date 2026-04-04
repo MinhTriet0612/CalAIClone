@@ -31,23 +31,17 @@ graph TB
         UC11[UC-11: View Meal History]
     end
 
-    subgraph "Daily Targets"
-        UC13[UC-13: Set Custom Daily Targets]
-        UC14[UC-14: Delete Custom Daily Targets]
-    end
-
     subgraph "User Management"
-        UC15[UC-15: Manage User Profile]
-        UC17[UC-17: Update Macro Targets]
-        UC18[UC-18: Update User Role]
+        UC12[UC-12: Manage User Profile]
+        UC13[UC-13: Update Global Macro Targets]
     end
 
     subgraph "AI Coach"
-        UC19[UC-19: Chat with Nutrition Coach]
+        UC14[UC-14: Chat with Nutrition Coach]
     end
 
     subgraph "Settings"
-        UC20[UC-20: Recalculate Targets]
+        UC15[UC-15: Recalculate Plans]
     end
 
     U --> UC1
@@ -59,21 +53,17 @@ graph TB
     U --> UC9
     U --> UC10
     U --> UC11
+    U --> UC12
     U --> UC13
     U --> UC14
     U --> UC15
-    U --> UC17
-    U --> UC19
-    U --> UC20
-
-    A --> UC18
 
     UC5 --> UC6
     UC5 --> UC7
     UC8 --> AI
     UC8 --> IMG
-    UC19 --> AI
-    UC20 --> UC6
+    UC14 --> AI
+    UC15 --> UC6
 ```
 
 ---
@@ -210,34 +200,7 @@ graph TB
 
 ---
 
-| **Main Flow** | 1. Frontend requests GET /api/meals/daily-summary?date=YYYY-MM-DD<br>2. Backend fetches meals for the date<br>3. Backend fetches/auto-creates daily target (Includes User Defaults or Custom Target)<br>4. Backend calculates consumed (sum of meals) and remaining (target - consumed, min 0)<br>5. Returns { date, targets, consumed, remaining, meals } |
-| **Postcondition** | Dashboard shows macro progress bars and meal list; Target values are mapped correctly. |
-
----
-
-### UC-13: Set Custom Daily Targets
-
-| Field | Value |
-|-------|-------|
-| **Actor** | User |
-| **Main Flow** | 1. User provides date + custom targets + optional healthScore<br>2. Backend validates that values are positive numbers<br>3. Backend upserts DailyTarget record<br>4. HealthScore clamped to 1-10 |
-| **Postcondition** | DailyTarget entry created/updated for the specified date; user-specific default targets are ignored for that date. |
-| **Exception** | E1: Invalid input (negative numbers) -> System returns 400 Bad Request. |
-
----
-
-### UC-14: Delete Custom Daily Targets
-
-| Field | Value |
-|-------|-------|
-| **Actor** | User |
-| **Main Flow** | 1. User requests deletion of custom target for a date<br>2. Backend deletes DailyTarget record from DB<br>3. System reverts to using user's global defaults for that date |
-| **Postcondition** | Custom DailyTarget record removed; system fallback to global targets active. |
-| **Exception** | E1: No custom target exists for that date -> System returns 404/Success (Idempotent). |
-
----
-
-### UC-15: Manage User Profile
+### UC-12: Manage User Profile
 
 | Field | Value |
 |-------|-------|
@@ -248,45 +211,34 @@ graph TB
 
 ---
 
-### UC-17: Update Macro Targets
+### UC-13: Update Global Macro Targets
 
 | Field | Value |
 |-------|-------|
 | **Actor** | User |
-| **Main Flow** | 1. PUT /api/users/targets<br>2. Updates targetCalories, targetProtein, targetCarbs, targetFats |
+| **Main Flow** | 1. User enters custom calories/protein/carbs/fats in Settings<br>2. Backend updates User model defaults |
 
 ---
 
-### UC-18: Update User Role (Admin Only)
+### UC-14: Chat with Nutrition Coach
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Admin |
-| **Precondition** | Caller has role = "admin" |
-| **Main Flow** | 1. PUT /api/users/role with { uid, role }<br>2. RolesGuard verifies admin role<br>3. Updates target user's role |
-| **Exception** | E1: Non-admin caller -> 403 Forbidden |
-
----
-
-### UC-19: Chat with Nutrition Coach
-
-| Field | Value |
-|-------|-------|
-| **Actor** | User, Google Gemini AI |
-| **Trigger** | User navigates to Meat Chat and sends a message |
+| **Actor** | User, Google Gemini AI (External) |
+| **Trigger** | User navigates to Meal Chat and sends a message |
 | **Main Flow** | 1. Frontend sends prompt + conversation history<br>2. Backend loads user's current daily summary (UC-10)<br>3. Backend builds prompt with: guardrails, client stats, history, user message<br>4. Gemini generates coaching response (<= 180 words, plain text)<br>5. Backend strips any markdown from response<br>6. Returns { reply } |
 | **Postcondition** | Chat message displayed in UI; summary session context updated |
 | **Exception** | E1: User asks for medical/pharmaceutical advice -> System triggers "Medical Disclaimer" guardrail response<br>E2: Gemini safety filter trigger -> Generic "I cannot answer this" response |
 
 ---
 
-### UC-20: Recalculate Targets (Settings)
+### UC-15: Recalculate Plans
 
 | Field | Value |
 |-------|-------|
 | **Actor** | User |
-| **Trigger** | User opens Settings and recalculates |
-| **Main Flow** | 1. User fills in profile data (gender, height, weight, birthDate, workouts, goal)<br>2. System calculates recommendations (UC-6)<br>3. User reviews in modal<br>4. User approves -> saves to profile + today's daily target |
+| **Relationships** | `<<include>>` UC-6 (Calculate), UC-7 (Approve) |
+| **Main Flow** | 1. User updates metrics in Settings<br>2. User clicks "Generate Recommendation"<br>3. System triggers calculation logic (UC-6)<br>4. User approves and updates global defaults (UC-7) |
 | **Postcondition** | Targets updated; dashboard reflects new values |
 
 ---
@@ -306,12 +258,7 @@ graph TB
 | UC-9 Log Meal | X | | | |
 | UC-10 View Daily Summary | X | | | |
 | UC-11 View Meal History | X | | | |
-| UC-12 View Daily Targets | X | | | |
-| UC-13 Set Custom Targets | X | | | |
-| UC-14 Delete Custom Targets | X | | | |
-| UC-15 View Profile | X | | | |
-| UC-16 Update Profile | X | | | |
-| UC-17 Update Macro Targets | X | | | |
-| UC-18 Update User Role | | X | | |
-| UC-19 Chat with Coach | X | | X | |
-| UC-20 Recalculate Targets | X | | | |
+| UC-12 Manage User Profile | X | | | |
+| UC-13 Update Macro Targets | X | | | |
+| UC-14 Chat with Coach | X | | X | |
+| UC-15 Recalculate Plans | X | | | |
