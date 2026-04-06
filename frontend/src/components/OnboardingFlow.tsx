@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { onboardingApi, type OnboardingData } from '../services/api';
-import type { MacroTargets } from '../../../shared/types';
+import { onboardingApi, type OnboardingData, type OnboardingRecommendations } from '../services/api';
 import './OnboardingFlow.css';
 
 interface OnboardingFlowProps {
@@ -11,12 +10,13 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [recommendations, setRecommendations] = useState<MacroTargets | null>(null);
+  const [recommendations, setRecommendations] = useState<OnboardingRecommendations | null>(null);
 
   const [formData, setFormData] = useState<OnboardingData>({
     gender: 'male',
     height: 175,
     weight: 70,
+    targetWeight: 65,
     birthDate: new Date(new Date().setFullYear(new Date().getFullYear() - 30)).toISOString().split('T')[0],
     workoutsPerWeek: 4,
     goal: 'weight_loss',
@@ -180,6 +180,21 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 </button>
               ))}
             </div>
+
+            {(formData.goal === 'weight_loss' || formData.goal === 'muscle_gain') && (
+              <div className="form-group" style={{ marginTop: '2rem' }}>
+                <label htmlFor="targetWeight">Target Weight (kg)</label>
+                <input
+                  id="targetWeight"
+                  type="number"
+                  value={formData.targetWeight}
+                  onChange={(e) => setFormData({ ...formData, targetWeight: parseInt(e.target.value) || 0 })}
+                  min="30"
+                  max="300"
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
+                />
+              </div>
+            )}
           </div>
         )}
 
@@ -205,6 +220,17 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
                 <span className="label">Fats</span>
                 <span className="value">{recommendations.fats}g</span>
               </div>
+              {recommendations.projectedDate && (
+                <div className="recommendation-item">
+                  <span className="label" style={{ color: '#2b6cb0' }}>Goal ETA</span>
+                  <span className="value" style={{ color: '#2b6cb0' }}>
+                    ~{recommendations.estimatedDays} days
+                    <small style={{ display: 'block', fontSize: '0.7em', fontWeight: 'normal' }}>
+                      (est. {new Date(recommendations.projectedDate).toLocaleDateString()})
+                    </small>
+                  </span>
+                </div>
+              )}
             </div>
             <p className="info-text">Click "Approve" to save these recommendations and start tracking!</p>
           </div>

@@ -61,11 +61,16 @@ export class ApproveRecommendationsDto {
   @ApiProperty({ example: 'weight_loss' })
   @IsOptional()
   @IsString()
-  goal?: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health';
+  goal?: 'weight_loss' | 'muscle_gain' | 'maintenance';
 
   @ApiProperty({ example: 3 })
   @IsOptional()
   @IsNumber()
   workoutsPerWeek?: number;
+
+  @ApiProperty({ example: 65 })
+  @IsOptional()
+  @IsNumber()
+  targetWeight?: number;
 }
 

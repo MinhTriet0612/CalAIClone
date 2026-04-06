@@ -13,7 +13,7 @@ import { User } from '../auth/decorators/user.decorator';
 import type { UserPayload } from '../auth/decorators/user.decorator';
 import { UsersService } from '../users/users.service';
 import { MacroTargetsDto } from '../users/dto/macro-targets.dto';
-import { DailyTargetsService } from '../daily-targets/daily-targets.service';
+import { TargetPeriodsService } from '../target-periods/target-periods.service';
 
 @ApiTags('onboarding')
 @ApiBearerAuth('JWT-auth')
@@ -23,7 +23,7 @@ export class OnboardingController {
   constructor(
     private readonly onboardingService: OnboardingService,
     private readonly usersService: UsersService,
-    private readonly dailyTargetsService: DailyTargetsService,
+    private readonly targetPeriodsService: TargetPeriodsService,
   ) {}
 
   @Post('calculate')
@@ -48,6 +48,7 @@ export class OnboardingController {
       birthDate: data.birthDate,
       workoutsPerWeek: data.workoutsPerWeek,
       goal: data.goal,
+      targetWeight: data.targetWeight,
     });
 
     return {
@@ -55,7 +56,9 @@ export class OnboardingController {
       protein: recommendations.protein,
       carbs: recommendations.carbs,
       fats: recommendations.fats,
-    };
+      estimatedDays: recommendations.estimatedDays,
+      projectedDate: recommendations.projectedDate,
+    } as MacroTargetsDto;
   }
 
   @Post('approve')
@@ -89,7 +92,7 @@ export class OnboardingController {
     };
 
     // 1. Update user targets
-    await this.usersService.updateUserTargets(user.id, normalizedTargets);
+    await this.usersService.updateUserTargets(user.id, normalizedTargets, targets.goal);
 
     // 2. Update user profile metrics (UC-5 Persistence Fix)
     if (targets.gender || targets.height || targets.weight || targets.birthDate) {
@@ -128,6 +131,7 @@ export class OnboardingController {
         gender: targets.gender,
         height: targets.height,
         weight: targets.weight,
+        targetWeight: targets.targetWeight,
         age: age,
         birthDate: birthDateObj,
         workoutsPerWeek: targets.workoutsPerWeek,
@@ -138,9 +142,6 @@ export class OnboardingController {
       console.log('[Onboarding] Profile updated successfully');
     }
 
-    const today = new Date();
-    const todayKey = today.toISOString().split('T')[0];
-    await this.dailyTargetsService.setDailyTargets(user.id, todayKey, normalizedTargets);
 
     return {
       message: 'Recommendations and profile saved successfully',

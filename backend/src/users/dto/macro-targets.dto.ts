@@ -24,5 +24,11 @@ export class MacroTargetsDto {
     description: 'Daily fats target in grams',
   })
   fats: number;
+
+  @ApiProperty({ example: 154, required: false })
+  estimatedDays?: number;
+
+  @ApiProperty({ example: '2026-09-07', required: false })
+  projectedDate?: string;
 }
 

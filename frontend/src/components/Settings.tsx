@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { onboardingApi, usersApi, type OnboardingData } from '../services/api';
+import { onboardingApi, usersApi, type OnboardingData, type OnboardingRecommendations } from '../services/api';
 import type { MacroTargets } from '../../../shared/types';
 import './Settings.css';
 
@@ -19,7 +19,7 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
   const [success, setSuccess] = useState('');
   const [currentTargets, setCurrentTargets] = useState<MacroTargets | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [recommendations, setRecommendations] = useState<MacroTargets | null>(null);
+  const [recommendations, setRecommendations] = useState<OnboardingRecommendations | null>(null);
   const [formData, setFormData] = useState<OnboardingData>({
     gender: 'male',
     height: 175,
@@ -27,6 +27,7 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
     birthDate: defaultBirthDate,
     workoutsPerWeek: 4,
     goal: 'maintenance',
+    targetWeight: 70,
   });
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
             workoutsPerWeek: profile.workoutsPerWeek ?? prev.workoutsPerWeek,
             birthDate: profile.birthDate ? new Date(profile.birthDate).toISOString().split('T')[0] : prev.birthDate,
             goal: profile.goal ?? prev.goal,
+            targetWeight: profile.targetWeight ?? prev.targetWeight,
           }));
         }
       } catch (err: any) {
@@ -188,6 +190,7 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
                 max="300"
               />
             </div>
+
           </div>
 
           <div className="form-row">
@@ -227,8 +230,6 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
                 { label: 'Lose weight', value: 'weight_loss' },
                 { label: 'Maintain', value: 'maintenance' },
                 { label: 'Gain weight', value: 'muscle_gain' },
-                { label: 'Cutting', value: 'cutting' },
-                { label: 'Health', value: 'health' },
               ].map((option) => (
                 <button
                   key={option.value}
@@ -241,6 +242,22 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
               ))}
             </div>
           </div>
+
+          {(formData.goal === 'weight_loss' || formData.goal === 'muscle_gain') && (
+            <div className="form-row" style={{ marginTop: '1rem' }}>
+              <label htmlFor="settings-target-weight">Target Weight (kg)</label>
+              <input
+                id="settings-target-weight"
+                type="number"
+                value={formData.targetWeight}
+                onChange={(e) => setFormData({ ...formData, targetWeight: parseInt(e.target.value) || 0 })}
+                min="30"
+                max="300"
+                style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd' }}
+              />
+            </div>
+          )}
+
 
           <button className="recommend-button" onClick={handleRecommend} disabled={loading}>
             {loading ? 'Calculating...' : 'Generate Recommendation'}
@@ -274,6 +291,12 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
                 <strong>{recommendations.fats} g</strong>
               </div>
             </div>
+            {recommendations.projectedDate && (
+              <p style={{ marginTop: '1rem', color: '#2b6cb0', fontWeight: 'bold' }}>
+                🎉 You will reach your target weight in ~{recommendations.estimatedDays} days 
+                (est. {new Date(recommendations.projectedDate).toLocaleDateString()}).
+              </p>
+            )}
             <p className="modal-hint">Approve to immediately update your dashboard targets.</p>
             <button className="approve-button" onClick={handleApprove} disabled={saving}>
               {saving ? 'Saving...' : 'Approve'}

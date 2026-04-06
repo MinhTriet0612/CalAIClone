@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DailyTargetsService } from '../daily-targets/daily-targets.service';
+import { TargetPeriodsService } from '../target-periods/target-periods.service';
 import { DailySummary, MacroTargets, Meal } from '../shared/types';
 
 @Injectable()
 export class ChatMealSummaryService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly dailyTargetsService: DailyTargetsService,
+    private readonly targetPeriodsService: TargetPeriodsService,
   ) { }
 
   private async findMealsByDate(userId: string, date: string): Promise<Meal[]> {
@@ -46,7 +46,7 @@ export class ChatMealSummaryService {
     const targetDate = date || new Date().toISOString().split('T')[0];
     const meals = await this.findMealsByDate(userId, targetDate);
 
-    const targets = await this.dailyTargetsService.getTargetsForDate(userId, targetDate, true);
+    const targets = await this.targetPeriodsService.getTargetsForDate(userId, targetDate);
 
     const consumed: MacroTargets = meals.reduce(
       (acc, meal) => ({

@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Meal, DailySummary, MacroTargets } from '../shared/types';
 import { CreateMealDto } from './dto/create-meal.dto';
-import { DailyTargetsService } from '../daily-targets/daily-targets.service';
+import { TargetPeriodsService } from '../target-periods/target-periods.service';
 
 @Injectable()
 export class MealsService {
   constructor(
     private prisma: PrismaService,
-    private dailyTargetsService: DailyTargetsService,
+    private targetPeriodsService: TargetPeriodsService,
   ) { }
 
   /**
@@ -61,7 +61,7 @@ export class MealsService {
         fats: createMealDto.fats,
         imageUrl: createMealDto.imageUrl,
         healthScore: healthScore,
-        date: new Date(), // Set to current date/time
+        date: createMealDto.date ? new Date(createMealDto.date) : new Date(), // Use provided date or default to today
       },
     });
 
@@ -150,9 +150,8 @@ export class MealsService {
     const targetDate = date || new Date().toISOString().split('T')[0];
     const meals = await this.findByDate(userId, targetDate);
 
-    // Get targets for this specific date (auto-creates if missing)
-    // This ensures a daily target record exists in the database
-    const targets = await this.dailyTargetsService.getTargetsForDate(userId, targetDate, true);
+    // Get targets for this specific date (range-based lookup)
+    const targets = await this.targetPeriodsService.getTargetsForDate(userId, targetDate);
 
     // Calculate consumed totals (sum all meals for the day)
     const consumed: MacroTargets = meals.reduce(
@@ -218,28 +217,38 @@ export class MealsService {
       ),
     );
 
+    // Get user's creation date to avoid showing "ghost" targets for dates before they signed up
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { createdAt: true },
+    });
+
+    const userCreatedDate = user?.createdAt || new Date();
+    // Normalize creation date to start of day UTC
+    const creationStart = new Date(Date.UTC(
+      userCreatedDate.getUTCFullYear(),
+      userCreatedDate.getUTCMonth(),
+      userCreatedDate.getUTCDate(),
+      0, 0, 0, 0
+    ));
+
+    // Cap the start date at the later of the requested start or the user's creation date
+    const finalStart = start > creationStart ? start : creationStart;
+
     // Get all meals in date range
     const meals = await this.prisma.meal.findMany({
       where: {
         userId,
         date: {
-          gte: start,
+          gte: finalStart,
           lte: end,
         },
       },
       orderBy: { date: 'desc' },
     });
 
-    // Get all daily targets in date range (custom targets, not auto-created defaults)
-    const dailyTargets = await this.prisma.dailyTarget.findMany({
-      where: {
-        userId,
-        date: {
-          gte: start,
-          lte: end,
-        },
-      },
-    });
+    // Since we no longer use single-day targets, "activity" is purely defined by whether they ate a meal.
+    // There are no "custom target periods" for single days.
 
     // Group meals by date
     const mealsByDate = new Map<string, Meal[]>();
@@ -264,32 +273,17 @@ export class MealsService {
       });
     });
 
-    // Get dates that have custom daily targets (user set custom targets)
-    const datesWithCustomTargets = new Set<string>();
-    dailyTargets.forEach((target) => {
-      const dateKey = target.date.toISOString().split('T')[0];
-      datesWithCustomTargets.add(dateKey);
-    });
+    // Get all unique dates from meals
+    const activityDates = new Set<string>();
+    meals.forEach(m => activityDates.add(m.date.toISOString().split('T')[0]));
 
-    // Get dates that have meals
-    const datesWithMeals = new Set<string>(mealsByDate.keys());
-
-    // Combine: dates with meals OR custom targets
-    const datesWithData = new Set<string>([
-      ...datesWithMeals,
-      ...datesWithCustomTargets,
-    ]);
-
-    // Only generate summaries for dates that have actual data
+    // Generate summaries ONLY for dates that have actual activity/data
     const summaries: DailySummary[] = [];
-
-    for (const dateKey of datesWithData) {
+    
+    for (const dateKey of activityDates) {
       const dayMeals = mealsByDate.get(dateKey) || [];
+      const targets = await this.targetPeriodsService.getTargetsForDate(userId, dateKey);
 
-      // Get targets for this date (don't auto-create, just get what exists)
-      const targets = await this.dailyTargetsService.getTargetsForDate(userId, dateKey, true);
-
-      // Calculate consumed
       const consumed: MacroTargets = dayMeals.reduce(
         (acc, meal) => ({
           calories: acc.calories + Number(meal.calories),
@@ -300,7 +294,6 @@ export class MealsService {
         { calories: 0, protein: 0, carbs: 0, fats: 0 },
       );
 
-      // Calculate remaining
       const remaining: MacroTargets = {
         calories: Math.max(0, targets.calories - consumed.calories),
         protein: Math.max(0, targets.protein - consumed.protein),
@@ -308,6 +301,7 @@ export class MealsService {
         fats: Math.max(0, targets.fats - consumed.fats),
       };
 
+      // Add summary for this date
       summaries.push({
         date: dateKey,
         targets,

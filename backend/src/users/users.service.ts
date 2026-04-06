@@ -42,12 +42,6 @@ export class UsersService {
         activityLevel: true,
         goal: true,
         targetWeight: true,
-        targetDate: true,
-        dietaryPreferences: true,
-        targetCalories: true,
-        targetProtein: true,
-        targetCarbs: true,
-        targetFats: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -88,20 +82,29 @@ export class UsersService {
         activityLevel: profile.activityLevel,
         goal: profile.goal,
         targetWeight: profile.targetWeight,
-        targetDate: profile.targetDate,
-        dietaryPreferences: profile.dietaryPreferences || [],
       },
     });
   }
 
-  async updateUserTargets(userId: string, targets: MacroTargets): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
+  async updateUserTargets(userId: string, targets: MacroTargets, goal?: string): Promise<void> {
+    const now = new Date();
+    // End the current active period(s)
+    await this.prisma.targetPeriod.updateMany({
+      where: { userId, endDate: null },
+      data: { endDate: now },
+    });
+
+    // Create new active period
+    await this.prisma.targetPeriod.create({
       data: {
-        targetCalories: targets.calories,
-        targetProtein: targets.protein,
-        targetCarbs: targets.carbs,
-        targetFats: targets.fats,
+        userId,
+        startDate: now,
+        endDate: null,
+        calories: targets.calories,
+        protein: targets.protein,
+        carbs: targets.carbs,
+        fats: targets.fats,
+        goal: goal,
       },
     });
   }
@@ -114,25 +117,20 @@ export class UsersService {
   }
 
   async getUserTargets(userId: string): Promise<MacroTargets | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        targetCalories: true,
-        targetProtein: true,
-        targetCarbs: true,
-        targetFats: true,
-      },
+    const period = await this.prisma.targetPeriod.findFirst({
+      where: { userId, endDate: null },
+      orderBy: { startDate: 'desc' },
     });
 
-    if (!user) {
+    if (!period) {
       return null;
     }
 
     return {
-      calories: user.targetCalories,
-      protein: user.targetProtein,
-      carbs: user.targetCarbs,
-      fats: user.targetFats,
+      calories: period.calories,
+      protein: period.protein,
+      carbs: period.carbs,
+      fats: period.fats,
     };
   }
 }

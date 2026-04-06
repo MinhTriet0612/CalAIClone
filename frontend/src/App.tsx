@@ -22,6 +22,7 @@ function AppContent() {
   const [analyzing, setAnalyzing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+  const [currentDate, setCurrentDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
     // Check if user needs onboarding
@@ -54,11 +55,12 @@ function AppContent() {
     }
   };
 
-  const loadDailySummary = async () => {
+  const loadDailySummary = async (date?: string) => {
     try {
       setLoading(true);
-      console.log('📊 Loading daily summary...');
-      const summary = await mealsApi.getDailySummary();
+      const targetDate = date || currentDate;
+      console.log(`📊 Loading daily summary for ${targetDate}...`);
+      const summary = await mealsApi.getDailySummary(targetDate);
       console.log('✅ Daily summary loaded:', summary);
       setDailySummary(summary);
     } catch (error: any) {
@@ -77,6 +79,18 @@ function AppContent() {
     } finally {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    if (needsOnboarding === false && token) {
+      loadDailySummary(currentDate);
+    }
+  }, [currentDate, needsOnboarding, token]);
+
+  const handleDateChange = (days: number) => {
+    const date = new Date(currentDate);
+    date.setDate(date.getDate() + days);
+    setCurrentDate(date.toISOString().split('T')[0]);
   };
 
   const handleMealAnalyzed = (analysis: MealAnalysis, file?: File) => {
@@ -133,6 +147,7 @@ function AppContent() {
         fats: pendingMeal.fats,
         healthScore: pendingMeal.healthScore,
         imageUrl: pendingMeal.imageUrl,
+        date: currentDate, // Use the current dashboard date
       };
 
       const updatedSummary = await mealsApi.logMeal(mealData);
@@ -189,10 +204,8 @@ function AppContent() {
         targets={dailySummary.targets}
         consumed={dailySummary.consumed}
         remaining={dailySummary.remaining}
-        healthScore={dailySummary.healthScore}
-        onTargetsUpdated={async () => {
-          await loadDailySummary();
-        }}
+        onPrevDate={() => handleDateChange(-1)}
+        onNextDate={() => handleDateChange(1)}
       />
 
       <MealsList meals={dailySummary.meals} />

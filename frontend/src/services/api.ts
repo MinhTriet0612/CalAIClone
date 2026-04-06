@@ -10,6 +10,8 @@ interface CreateMealDto {
   carbs: number;
   fats: number;
   imageUrl?: string;
+  healthScore?: number;
+  date?: string;
 }
 
 const TOKEN_KEY = 'jwt_token';
@@ -178,15 +180,21 @@ export interface OnboardingData {
   gender: 'male' | 'female' | 'other';
   height: number; // cm
   weight: number; // kg
+  targetWeight?: number; // kg
   birthDate: string; // YYYY-MM-DD
   workoutsPerWeek: number;
-  goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health';
+  goal: 'weight_loss' | 'muscle_gain' | 'maintenance';
+}
+
+export interface OnboardingRecommendations extends MacroTargets {
+  estimatedDays?: number;
+  projectedDate?: string;
 }
 
 export const onboardingApi = {
   // Calculate recommendations based on onboarding data
-  calculateRecommendations: async (data: OnboardingData): Promise<MacroTargets> => {
-    const response = await api.post<MacroTargets>('/onboarding/calculate', data);
+  calculateRecommendations: async (data: OnboardingData): Promise<OnboardingRecommendations> => {
+    const response = await api.post<OnboardingRecommendations>('/onboarding/calculate', data);
     return response.data;
   },
 
@@ -212,22 +220,10 @@ export const chatApi = {
   },
 };
 
-export const dailyTargetsApi = {
-  // Get targets for a date
+export const targetPeriodsApi = {
+  // Get historical targets for a date
   getTargets: async (date: string): Promise<MacroTargets> => {
-    const response = await api.get<MacroTargets>('/daily-targets', { params: { date } });
-    return response.data;
-  },
-
-  // Set/Update targets for a date
-  setTargets: async (date: string, targets: MacroTargets & { healthScore?: number }) => {
-    const response = await api.put('/daily-targets', targets, { params: { date } });
-    return response.data;
-  },
-
-  // Reset targets for a date to defaults
-  deleteTargets: async (date: string) => {
-    const response = await api.delete('/daily-targets', { params: { date } });
+    const response = await api.get<MacroTargets>('/target-periods', { params: { date } });
     return response.data;
   },
 };

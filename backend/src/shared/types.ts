@@ -52,8 +52,6 @@ export interface UserProfile {
   activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
   goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health';
   targetWeight?: number;
-  targetDate?: Date;
-  dietaryPreferences?: string[];
 }
 
 export interface ChatMessage {

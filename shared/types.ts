@@ -49,7 +49,7 @@ export interface UserProfile {
   height: number; // cm
   weight: number; // kg
   activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
-  goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health';
+  goal: 'weight_loss' | 'muscle_gain' | 'maintenance';
   targetWeight?: number;
   targetDate?: Date;
   dietaryPreferences?: string[];

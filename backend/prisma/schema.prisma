@@ -26,23 +26,35 @@ model User {
   workoutsPerWeek    Int?
   goal               String? // "weight_loss" | "muscle_gain" | "maintenance" | "cutting" | "health"
   targetWeight       Float?
-  targetDate         DateTime?
-  dietaryPreferences String[]  @default([])
-
-  // Targets
-  targetCalories Int   @default(2000)
-  targetProtein  Float @default(150)
-  targetCarbs    Float @default(250)
-  targetFats     Float @default(65)
 
   // Relations
-  meals        Meal[]
-  dailyTargets DailyTarget[]
+  meals         Meal[]
+  targetPeriods TargetPeriod[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
+}
+
+model TargetPeriod {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  startDate DateTime // Start of the period (normalized to UTC 00:00:00)
+  endDate   DateTime? // End of the period (NULL means it's the currently active plan)
+
+  calories Int
+  protein  Float
+  carbs    Float
+  fats     Float
+  goal     String? // Keep track of what the goal was during this period
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, startDate, endDate])
+  @@map("target_periods")
 }
 
 model Meal {
@@ -66,24 +78,3 @@ model Meal {
   @@index([userId, date])
   @@map("meals")
 }
-
-model DailyTarget {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  date        DateTime // Date for this target (YYYY-MM-DD, time set to 00:00:00)
-  calories    Int
-  protein     Float
-  carbs       Float
-  fats        Float
-  healthScore Int? // Daily health score from 1-10 (optional, can be calculated or set manually)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, date])
-  @@index([userId, date])
-  @@map("daily_targets")
-}
-

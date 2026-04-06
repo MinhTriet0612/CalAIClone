@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { OnboardingController } from './onboarding.controller';
 import { OnboardingService } from './onboarding.service';
 import { UsersModule } from '../users/users.module';
-import { DailyTargetsModule } from '../daily-targets/daily-targets.module';
+import { TargetPeriodsModule } from '../target-periods/target-periods.module';
 
 @Module({
-  imports: [UsersModule, DailyTargetsModule],
+  imports: [UsersModule, TargetPeriodsModule],
   controllers: [OnboardingController],
   providers: [OnboardingService],
   exports: [OnboardingService],

@@ -52,10 +52,22 @@ export class CalculateRecommendationsDto {
 
   @ApiProperty({
     example: 'weight_loss',
-    enum: ['weight_loss', 'muscle_gain', 'maintenance', 'cutting', 'health'],
+    enum: ['weight_loss', 'muscle_gain', 'maintenance'],
     description: 'User fitness goal',
   })
-  @IsEnum(['weight_loss', 'muscle_gain', 'maintenance', 'cutting', 'health'])
-  goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health';
+  @IsEnum(['weight_loss', 'muscle_gain', 'maintenance'])
+  goal: 'weight_loss' | 'muscle_gain' | 'maintenance';
+
+  @ApiProperty({
+    example: 65,
+    description: 'Target weight in kilograms',
+    minimum: 30,
+    maximum: 300,
+    required: false,
+  })
+  @IsNumber()
+  @Min(30)
+  @Max(300)
+  targetWeight?: number;
 }
 

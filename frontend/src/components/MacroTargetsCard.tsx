@@ -1,6 +1,4 @@
-import { useState } from 'react';
 import { MacroTargets } from '../../../shared/types';
-import { DailyTargetModal } from './DailyTargetModal';
 import './MacroTargetsCard.css';
 
 interface MacroTargetsCardProps {
@@ -8,8 +6,8 @@ interface MacroTargetsCardProps {
   targets: MacroTargets;
   consumed: MacroTargets;
   remaining: MacroTargets;
-  healthScore?: number;
-  onTargetsUpdated?: (newTargets: MacroTargets) => void;
+  onPrevDate?: () => void;
+  onNextDate?: () => void;
 }
 
 export function MacroTargetsCard({ 
@@ -17,25 +15,24 @@ export function MacroTargetsCard({
   targets, 
   consumed, 
   remaining, 
-  healthScore,
-  onTargetsUpdated 
+  onPrevDate,
+  onNextDate
 }: MacroTargetsCardProps) {
-  const [showEditModal, setShowEditModal] = useState(false);
 
-  const getHealthScoreColor = (score?: number) => {
-    if (!score) return '#999';
-    if (score >= 8) return '#4CAF50'; // Green
-    if (score >= 6) return '#FF9800'; // Orange
-    return '#F44336'; // Red
+  const formatDateLabel = (dateStr: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    if (dateStr === today) return 'Today';
+    if (dateStr === yesterdayStr) return 'Yesterday';
+
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  const getHealthScoreLabel = (score?: number) => {
-    if (!score) return 'N/A';
-    if (score >= 9) return 'Excellent';
-    if (score >= 7) return 'Good';
-    if (score >= 5) return 'Fair';
-    return 'Poor';
-  };
+
   const MacroBar = ({ 
     label, 
     target, 
@@ -82,22 +79,21 @@ export function MacroTargetsCard({
   return (
     <div className="macro-targets-card">
       <div className="card-header">
-        <div className="title-area">
-          <h2>Daily Goals</h2>
-          <button 
-            className="edit-targets-btn" 
-            onClick={() => setShowEditModal(true)}
-            title="Edit target for this day"
-          >
-            ✎
+        <div className="date-navigator">
+          <button className="nav-btn" onClick={onPrevDate} aria-label="Previous Day">
+            ❮
+          </button>
+          <div className="date-display">
+            <h2>{formatDateLabel(date)}</h2>
+            <p>{date}</p>
+          </div>
+          <button className="nav-btn" onClick={onNextDate} aria-label="Next Day">
+            ❯
           </button>
         </div>
-        {healthScore !== undefined && (
-          <div className="health-score-badge" style={{ backgroundColor: getHealthScoreColor(healthScore) }}>
-            <span className="health-score-value">{healthScore.toFixed(1)}</span>
-            <span className="health-score-label">{getHealthScoreLabel(healthScore)}</span>
-          </div>
-        )}
+        
+        <div className="header-actions">
+        </div>
       </div>
 
       <MacroBar
@@ -137,18 +133,6 @@ export function MacroTargetsCard({
           color="green"
         />
       </div>
-
-      {showEditModal && (
-        <DailyTargetModal
-          date={date}
-          currentKcal={targets.calories}
-          initialTargets={targets}
-          onClose={() => setShowEditModal(false)}
-          onUpdated={(newTargets) => {
-            onTargetsUpdated?.(newTargets);
-          }}
-        />
-      )}
     </div>
   );
 }

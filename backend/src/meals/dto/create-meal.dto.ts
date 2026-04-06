@@ -73,5 +73,12 @@ export class CreateMealDto {
   @Min(1)
   @Max(10)
   healthScore?: number;
+  @ApiPropertyOptional({
+    description: 'Date of the meal (YYYY-MM-DD), defaults to today',
+    example: '2024-01-15',
+  })
+  @IsOptional()
+  @IsString()
+  date?: string;
 }
 

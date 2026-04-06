@@ -6,7 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { MealsModule } from './meals/meals.module';
-import { DailyTargetsModule } from './daily-targets/daily-targets.module';
+import { TargetPeriodsModule } from './target-periods/target-periods.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { ChatModule } from './chat/chat.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
@@ -20,7 +20,7 @@ import { LoggingMiddleware } from './common/middleware/logging.middleware';
     AuthModule,
     UsersModule,
     MealsModule,
-    DailyTargetsModule,
+    TargetPeriodsModule,
     OnboardingModule,
     ChatModule,
     MonitoringModule,

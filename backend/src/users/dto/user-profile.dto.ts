@@ -21,17 +21,10 @@ export class UserProfileDto {
 
   @ApiProperty({
     example: 'weight_loss',
-    enum: ['weight_loss', 'muscle_gain', 'maintenance', 'cutting', 'health'],
+    enum: ['weight_loss', 'muscle_gain', 'maintenance'],
   })
-  goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health';
+  goal: 'weight_loss' | 'muscle_gain' | 'maintenance';
 
   @ApiPropertyOptional({ example: 65 })
   targetWeight?: number;
-
-  @ApiPropertyOptional({ example: '2024-06-01' })
-  targetDate?: Date;
-
-  @ApiPropertyOptional({ example: ['vegetarian'], type: [String] })
-  dietaryPreferences?: string[];
 }
-

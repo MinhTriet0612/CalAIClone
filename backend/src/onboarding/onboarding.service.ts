@@ -5,9 +5,10 @@ export interface OnboardingData {
   gender: 'male' | 'female' | 'other';
   height: number; // cm
   weight: number; // kg
+  targetWeight?: number; // kg
   birthDate: string; // YYYY-MM-DD
   workoutsPerWeek: number; // 0-2, 3-5, 6+
-  goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health';
+  goal: 'weight_loss' | 'muscle_gain' | 'maintenance';
 }
 
 export interface OnboardingRecommendations {
@@ -15,6 +16,8 @@ export interface OnboardingRecommendations {
   protein: number; // grams
   carbs: number; // grams
   fats: number; // grams
+  estimatedDays?: number;
+  projectedDate?: string;
 }
 
 @Injectable()
@@ -38,8 +41,8 @@ export class OnboardingService {
    */
   private mapWorkoutsToActivityLevel(workoutsPerWeek: number): 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active' {
     if (workoutsPerWeek <= 2) return 'sedentary';
-    if (workoutsPerWeek <= 5) return 'moderate';
-    return 'very_active';
+    if (workoutsPerWeek <= 5) return 'light';
+    return 'moderate';
   }
 
   /**
@@ -76,15 +79,13 @@ export class OnboardingService {
   /**
    * Adjust calories based on goal
    */
-  private adjustCaloriesForGoal(tdee: number, goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health'): number {
+  private adjustCaloriesForGoal(tdee: number, goal: 'weight_loss' | 'muscle_gain' | 'maintenance'): number {
     switch (goal) {
       case 'weight_loss':
-      case 'cutting':
-        return Math.round(tdee - 500); // 500 cal deficit
+        return Math.max(1200, Math.round(tdee - 500)); // Minimum 1200 safety floor
       case 'muscle_gain':
         return Math.round(tdee + 500); // 500 cal surplus
       case 'maintenance':
-      case 'health':
       default:
         return Math.round(tdee);
     }
@@ -93,7 +94,7 @@ export class OnboardingService {
   /**
    * Calculate macronutrient targets
    */
-  private calculateMacros(calories: number, weight: number, goal: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health'): {
+  private calculateMacros(calories: number, weight: number, goal: 'weight_loss' | 'muscle_gain' | 'maintenance'): {
     protein: number;
     carbs: number;
     fats: number;
@@ -102,7 +103,7 @@ export class OnboardingService {
     let proteinPerKg = 1.8;
     if (goal === 'muscle_gain') {
       proteinPerKg = 2.2;
-    } else if (goal === 'weight_loss' || goal === 'cutting') {
+    } else if (goal === 'weight_loss') {
       proteinPerKg = 2.0; // Higher protein for weight loss to preserve muscle
     }
     const protein = Math.round(weight * proteinPerKg);
@@ -143,11 +144,31 @@ export class OnboardingService {
     // Calculate macros
     const macros = this.calculateMacros(calories, data.weight, data.goal);
 
+    // Calculate Project Timeline
+    let estimatedDays: number | undefined;
+    let projectedDate: string | undefined;
+
+    if (data.targetWeight && data.goal !== 'maintenance') {
+      const weightDiff = Math.abs(data.weight - data.targetWeight);
+      if (weightDiff > 0) {
+        // 1kg of human body mass roughly equals 7700 kcal
+        const totalCaloricShiftNeeded = weightDiff * 7700;
+        const dailyShift = 500; // Flat shift established in adjustCaloriesForGoal
+        estimatedDays = Math.ceil(totalCaloricShiftNeeded / dailyShift);
+        
+        const projDate = new Date();
+        projDate.setDate(projDate.getDate() + estimatedDays);
+        projectedDate = projDate.toISOString().split('T')[0];
+      }
+    }
+
     return {
       calories,
       protein: macros.protein,
       carbs: macros.carbs,
       fats: macros.fats,
+      estimatedDays,
+      projectedDate,
     };
   }
 }
