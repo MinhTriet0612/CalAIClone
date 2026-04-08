@@ -12,6 +12,9 @@ import { ChatModule } from './chat/chat.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { MetricsMiddleware } from './monitoring/metrics.middleware';
 import { LoggingMiddleware } from './common/middleware/logging.middleware';
+import { ScientificModule } from './scientific/scientific.module';
+import { WeightLogsModule } from './weight-logs/weight-logs.module';
+import { CoachingModule } from './coaching/coaching.module';
 
 @Module({
   imports: [
@@ -24,6 +27,9 @@ import { LoggingMiddleware } from './common/middleware/logging.middleware';
     OnboardingModule,
     ChatModule,
     MonitoringModule,
+    ScientificModule,
+    WeightLogsModule,
+    CoachingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

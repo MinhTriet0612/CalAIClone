@@ -30,45 +30,73 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 
 ---
 
-### 4. Process Analysis
+## 4. Scientific Methodology (Adaptive Coaching Engine)
+Cal AI transitions from a static calculator to a dynamic coaching system by implementing biological feedback loops as defined in clinical literature (Hall KD, PMC2376744).
 
-#### 4.1. As-Is Process (Manual Nutrition Tracking)
-The current manual process is error-prone, time-consuming, and lacks historical consistency.
+### 4.1. Weight Smoothing Algorithm (Noise Reduction)
+**Problem:** Daily body weight is volatile due to water retention, salt intake, and glycogen flux.
+**Scientific Solution:** Exponential Moving Average (EMA).
+**Formula:**
+$$W_{trend, t} = \alpha \cdot W_{actual, t} + (1 - \alpha) \cdot W_{trend, t-1}$$
+*(Where $\alpha = 0.1$ minimizes variance while maintaining responsiveness to real tissue change)*
+
+### 4.2. Reverse Energy Induction (Adaptive TDEE)
+**Principle:** The First Law of Thermodynamics (Energy Balance).
+**Formula:**
+$$TDEE_{real} = \text{Avg}(Calories\_In_{14d}) - \frac{\Delta W_{trend} \cdot \rho}{14}$$
+- **$\rho$ (Energy Density):** Constrained at **7700 kcal/kg** (Wishnofsky's Rule).
+- **Verification:** If $\Delta W = 0$ (Maintenance), then $TDEE = Calories\_In$.
+
+### 4.3. Predictive Analytics (Plateau & Trajectory)
+- **Plateau Prediction:** Defined by **Deficit Erosion**. Loss stalls when the gap between metabolic burn ($TDEE_{real}$) and energy intake ($Calories_{In}$) is too narrow. A plateau is triggered when $(TDEE - Intake) \le 100 \text{ kcal}$.
+- **Trajectory Projection:** Calculated via dynamic integration: $W_{n} = W_{n-1} + \frac{(Target - TDEE_{dynamic, n})}{7700}$. $TDEE_{dynamic}$ decreases as weight is lost ($\approx 22 \text{ kcal/kg}$) to account for metabolic slowdown (Adaptive Thermogenesis).
+
+---
+
+---
+
+## 5. Process Analysis
+
+### 5.1. As-Is Process (Manual Nutrition Tracking)
+
+The legacy manual process lacks noise filtering and scientific adjustment.
 
 ```mermaid
 activityDiagram
     start
-    :Dieter decides to track food;
-    :Dieter looks up food calorie table (online/book);
-    if (Food found?) then (yes)
-        :Dieter estimates portion size;
-        :Dieter calculates calories and macros;
-        :Dieter writes down in paper journal or note app;
-    else (no)
-        :Dieter guesses nutritional values;
-        :Risk of significant deviation;
+    :Dieter records weight and food manually:;
+    :Calculate deficit via static formula:;
+    if (Weight doesn't drop?) then (Yes)
+        :Dieter gets confused/disheartened;
+        :Manual guess on calorie reduction;
+    else (No)
+        :Continue static routine;
     endif
-    :Dieter manually sum daily totals;
-    :Dieter compare against guessed goal;
     stop
 ```
 
-#### 4.2. To-Be Process (Cal AI Assisted)
-The proposed solution automates data entry and uses AI for scientific accuracy.
+### 5.2. To-Be Process (Adaptive Cal AI Integration)
+
+The proposed solution implements a feedback loop to automate scientific adjustments.
 
 ```mermaid
 activityDiagram
     start
-    :Dieter takes photo of meal;
-    :Dieter uploads photo to Cal AI App;
-    subgraph "Cal AI Software"
-        :AI analyze(photo);
-        :System retrieveActiveTarget(date);
-        :System calculateRemainingMacros();
-    end
-    :Dieter confirms analysis;
-    :System logMeal(macros, image);
-    :System updateDashboard();
+    :Dieter logs weight and food photos:;
+    :AI Engine calculates daily macros:;
+    :Scientific Engine filters weight noise (EMA):;
+    if (14-day data window complete?) then (Yes)
+        :Retrieve TDEE via Reverse Induction;
+        :Compare actual vs predicted trajectory;
+        if (Plateau predicted?) then (Yes)
+            :Trigger Metabolic Recovery advice;
+        else (No)
+            :Auto-adjust Target for next week;
+        endif
+    else (No)
+        :Maintain latest target;
+    endif
+    :Update Dieter Dashboard;
     stop
 ```
 

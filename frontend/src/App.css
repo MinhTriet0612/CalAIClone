@@ -114,3 +114,108 @@
   color: #dc2626;
 }
 
+.coaching-section {
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.weight-log-btn {
+  padding: 8px 16px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.weight-log-btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.analytic-card {
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s;
+}
+
+.analytic-card:hover {
+  border-color: #cbd5e1;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.analytic-card .label {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.analytic-card .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.analytic-card .note {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.analytic-card.plateau-alert {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+
+.analytic-card.plateau-alert .label {
+  color: #e11d48;
+}
+
+.analytic-card.plateau-alert .value {
+  color: #be123c;
+}
+
+.insufficient-data {
+  padding: 32px;
+  background: #f8fafc;
+  border-radius: 16px;
+  text-align: center;
+  color: #64748b;
+  border: 1px dashed #cbd5e1;
+}
+
+.insufficient-data p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+

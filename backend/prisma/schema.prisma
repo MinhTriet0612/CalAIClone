@@ -30,11 +30,26 @@ model User {
   // Relations
   meals         Meal[]
   targetPeriods TargetPeriod[]
+  weightLogs    WeightLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("users")
+}
+
+model WeightLog {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rawWeight   Float // Scale weight entered by user
+  trendWeight Float // EMA smoothed weight
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("weight_logs")
 }
 
 model TargetPeriod {

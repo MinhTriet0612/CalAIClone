@@ -1,6 +1,25 @@
 import axios from 'axios';
 import type { MealAnalysis, DailySummary, MacroTargets, ChatMessage } from '../../../shared/types';
 
+export interface WeightLog {
+  id: string;
+  userId: string;
+  rawWeight: number;
+  trendWeight: number;
+  createdAt: string;
+}
+
+export interface CoachingAnalytics {
+  status: 'SUCCESS' | 'INSUFFICIENT_DATA';
+  message?: string;
+  currentTrendWeight?: number;
+  weightChange14d?: number;
+  avgIntake14d?: number;
+  adaptiveTDEE?: number;
+  isPlateau?: boolean;
+  trajectory?: { day: number; weight: number }[];
+}
+
 // CreateMealDto interface for frontend
 interface CreateMealDto {
   name: string;
@@ -216,6 +235,30 @@ export const usersApi = {
 export const chatApi = {
   askMeatCoach: async (prompt: string, history: ChatMessage[] = []) => {
     const response = await api.post<{ reply: string }>('/chat/meat', { prompt, history });
+    return response.data;
+  },
+};
+
+export const weightLogsApi = {
+  logWeight: async (weight: number): Promise<WeightLog> => {
+    const response = await api.post<WeightLog>('/weight-logs', { weight });
+    return response.data;
+  },
+
+  getHistory: async (): Promise<WeightLog[]> => {
+    const response = await api.get<WeightLog[]>('/weight-logs');
+    return response.data;
+  },
+
+  getLatestTrend: async (): Promise<{ trendWeight: number | null }> => {
+    const response = await api.get<{ trendWeight: number | null }>('/weight-logs/latest-trend');
+    return response.data;
+  },
+};
+
+export const coachingApi = {
+  getAnalytics: async (): Promise<CoachingAnalytics> => {
+    const response = await api.get<CoachingAnalytics>('/coaching/analytics');
     return response.data;
   },
 };

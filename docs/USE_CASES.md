@@ -11,22 +11,10 @@ graph TB
         IMG((Image Host))
     end
 
-    subgraph "Onboarding & Account"
-        UC5[UC-5: Establish Nutrition Plan]
-        UC12[UC-12: Manage Health Profile]
-        UC13[UC-13: Update Target Plan]
-    end
-
-    subgraph "Core Nutrition Tracking"
-        UC8[UC-8: Analyze Meal Photo]
-        UC9[UC-9: Record Food Intake]
-        UC10[UC-10: View Daily Summary]
-        UC11[UC-11: View Meal History]
-    end
-
-    subgraph "AI Services"
-        UC16[UC-16: Request Nutritional Advice]
-        UC17[UC-17: Recalculate Recommendations]
+    subgraph "Adaptive Coaching Engine"
+        UC14[UC-14: Monitor Weight Trends]
+        UC15[UC-15: Auto-Adjust Nutrition Plan]
+        UC18[UC-18: Predict Weight Plateau]
     end
 
     D --> UC5
@@ -38,11 +26,17 @@ graph TB
     D --> UC13
     D --> UC16
     D --> UC17
+    D --> UC14
+    D --> UC15
+    D --> UC18
 
     UC8 --> AI
     UC8 --> IMG
     UC16 --> AI
     UC17 --> UC5
+    UC15 --> UC17
+    UC14 --> UC15
+    UC14 --> UC18
 ```
 
 ---
@@ -176,14 +170,76 @@ sequenceDiagram
 
 ---
 
-### UC-12: Manage Health Profile
+---
+
+### UC-14: Monitor Weight Trends
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter |
-| **Main Flow** | 1. Dieter navigates to Settings/Profile<br>2. System displays current info (height, weight, age, etc.) via `GET /api/users/me`<br>3. Dieter modifies any field<br>4. Dieter clicks "Save"<br>5. System validates and updates DB via `PUT /api/users/profile` |
-| **Postcondition** | Dieter metadata updated in DB |
-| **Exception** | E1: Validation error (e.g. invalid weight) -> System returns 400. |
+| **Actor** | Dieter, Scientific Engine |
+| **Trigger** | Dieter enters current scale weight |
+| **Main Flow** | 1. Dieter enters raw weight (kg)<br>2. System retrieves latest $W_{trend, t-1}$<br>3. System applies EMA formula ($W_{trend, t} = \alpha \cdot W_{actual} + (1 - \alpha) \cdot W_{trend, t-1}$)<br>4. System stores both raw and trend weight<br>5. Dashboard updates with "Trend Weight" visualization |
+| **Postcondition** | Weight history updated; noise filtered for coaching logic |
+
+#### Sequence Diagram (UC-14)
+```mermaid
+sequenceDiagram
+    participant D as Dieter
+    participant S as Cal AI Software
+    participant SE as Scientific Engine
+    participant DB as Database
+
+    D->>S: inputRawWeight(kg)
+    S->>S: getLatestTrendWeight(userId)
+    S->>SE: calculateEMA(raw, active_trend)
+    SE-->>S: new_trend_weight
+    S->>DB: saveWeightLog(userId, raw, trend, timestamp)
+    S-->>D: updateWeightChart(trendData)
+```
+
+---
+
+### UC-15: Auto-Adjust Nutrition Plan
+
+| Field | Value |
+|-------|-------|
+| **Actor** | Dieter, Scientific Engine |
+| **Trigger** | Weekly Check-in (or 14-day data threshold reached) |
+| **Main Flow** | 1. System fetches `Avg(Calories_In)` and $\Delta W_{trend}$ for the last 14 days<br>2. System calculates $TDEE_{real}$ via Reverse Induction formula<br>3. System compares $TDEE_{real}$ with current target<br>4. If deviation > 5%, System proposes `NewTarget = TDEE_{real} + GoalOffset`<br>5. Dieter reviews and clicks "Apply Adjustment" |
+| **Postcondition** | TargetPeriod updated with scientifically verified macros |
+
+#### Sequence Diagram (UC-15)
+```mermaid
+sequenceDiagram
+    participant D as Dieter
+    participant S as Cal AI Software
+    participant SE as Scientific Engine
+    participant DB as Database
+
+    S->>DB: get14DayData(userId)
+    DB-->>S: mealLogs, weightLogs
+    S->>SE: calculateAdaptiveTDEE(meals, weights)
+    SE-->>S: tdeeReal, recommendedTarget
+    S-->>D: notifyAdjustmentFound(recommendedTarget)
+    D->>S: confirmAdjustment()
+    S->>DB: createNewTargetPeriod(recommendedTarget)
+    S-->>D: status: PLAN_OPTIMIZED
+```
+
+---
+
+### UC-18: Predict Weight Plateau
+
+| Field | Value |
+|-------|-------|
+| **Actor** | Dieter, Scientific Engine |
+| **Trigger** | TDEE calculation reveals significant metabolic slowdown |
+| **Main Flow** | 1. System calculates adaptation ratio $R = TDEE_{real} / TDEE_{initial}$<br>2. If $R < 0.9$, System flags potential plateau<br>3. Dieter receives "Metabolic Alert" notification<br>4. System provides advice (Diet Break or Activity Boost) |
+| **Postcondition** | Dieter informed of biological adaptation before weight stalls |
+
+---
+
+### UC-12: Manage Health Profile
 
 ---
 
@@ -194,14 +250,6 @@ sequenceDiagram
 | **Actor** | Dieter |
 | **Main Flow** | 1. Dieter adjusts Goal or Target Weight in Settings<br>2. System recalculates macros and projections<br>3. Dieter clicks "Approve"<br>4. System saves profile metrics and initializes new TargetPeriod |
 | **Postcondition** | New tracking phase started; dashboard updated |
-
----
-
-### [REMOVED] UC-14: Set Custom Daily Target
-Individual day target overrides are no longer supported. Users update their global plan which applies to today and onwards.
-
-### [REMOVED] UC-15: Reset Daily Target to Default
-Replaced by the continuous TargetPeriod system.
 
 ---
 
@@ -261,14 +309,17 @@ sequenceDiagram
 
 ## 3. Actor-Use Case Matrix
 
-| Use Case | Dieter | System Admin | AI Nutrition Consultant | Image Host |
-|----------|:----:|:-----:|:---------:|:----------:|
-| UC-5 Establish Plan | X | | | |
-| UC-8 Analyze Photo | X | | X | X |
-| UC-9 Record Food | X | | | |
-| UC-10 View Summary | X | | | |
-| UC-11 View History | X | | | |
-| UC-12 Manage Profile | X | | | |
-| UC-13 Update Plan | X | | | |
-| UC-16 Request Advice | X | | X | |
-| UC-17 Recalculate | X | | | |
+| Use Case | Dieter | System Admin | AI Nutrition Consultant | Image Host | Scientific Engine |
+|----------|:----:|:-----:|:---------:|:----------:|:----------:|
+| UC-5 Establish Plan | X | | | | |
+| UC-8 Analyze Photo | X | | X | X | |
+| UC-9 Record Food | X | | | | |
+| UC-10 View Summary | X | | | | |
+| UC-11 View History | X | | | | |
+| UC-12 Manage Profile | X | | | | |
+| UC-13 Update Plan | X | | | | |
+| UC-14 Monitor Trends | X | | | | X |
+| UC-15 Auto-Adjust | X | | | | X |
+| UC-16 Request Advice | X | | X | | |
+| UC-17 Recalculate | X | | | | |
+| UC-18 Predict Plateau | X | | | | X |

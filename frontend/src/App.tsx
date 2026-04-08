@@ -10,7 +10,8 @@ import { AddMealButton } from './components/AddMealButton';
 import { MealAnalysisModal } from './components/MealAnalysisModal';
 import { MeatChat } from './components/MeatChat';
 import { Settings } from './components/Settings';
-import { mealsApi, usersApi } from './services/api';
+import WeightLogModal from './components/WeightLogModal';
+import { mealsApi, usersApi, coachingApi, CoachingAnalytics } from './services/api';
 import { DailySummary, MealAnalysis } from '../../shared/types';
 import './App.css';
 
@@ -23,6 +24,8 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [currentDate, setCurrentDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [coachingAnalytics, setCoachingAnalytics] = useState<CoachingAnalytics | null>(null);
 
   useEffect(() => {
     // Check if user needs onboarding
@@ -43,6 +46,7 @@ function AppContent() {
       
       if (hasCustomTargets) {
         loadDailySummary();
+        loadCoachingAnalytics();
       }
     } catch (error: any) {
       console.error('Error checking onboarding status:', error);
@@ -210,9 +214,54 @@ function AppContent() {
 
       <MealsList meals={dailySummary.meals} />
 
+      <div className="coaching-section">
+        <div className="section-header">
+          <h3>Scientific Coaching Intelligence</h3>
+          <button className="weight-log-btn" onClick={() => setShowWeightModal(true)}>
+            Log Scale Weight
+          </button>
+        </div>
+
+        {coachingAnalytics && coachingAnalytics.status === 'SUCCESS' ? (
+          <div className="analytics-grid">
+            <div className="analytic-card">
+              <span className="label">Adaptive TDEE</span>
+              <span className="value">{coachingAnalytics.adaptiveTDEE} kcal</span>
+              <span className="note">Real metabolic burn</span>
+            </div>
+            <div className="analytic-card">
+              <span className="label">14d Trend</span>
+              <span className="value">{coachingAnalytics.weightChange14d} kg</span>
+              <span className="note">Noise-filtered</span>
+            </div>
+            {coachingAnalytics.isPlateau && (
+              <div className="analytic-card plateau-alert">
+                <span className="label">Plateau Alert</span>
+                <span className="value">Metabolic Shift</span>
+                <span className="note">Adaptation detected</span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="insufficient-data">
+            <p>Log your weight for 14 days to unlock adaptive metabolic tracking.</p>
+          </div>
+        )}
+      </div>
+
       <History />
 
       <AddMealButton onMealAnalyzed={handleMealAnalyzed} />
+
+      {showWeightModal && (
+        <WeightLogModal 
+          onClose={() => setShowWeightModal(false)} 
+          onSuccess={(newTrend) => {
+            loadCoachingAnalytics();
+            loadDailySummary();
+          }}
+        />
+      )}
 
       {pendingMeal && (
         <MealAnalysisModal

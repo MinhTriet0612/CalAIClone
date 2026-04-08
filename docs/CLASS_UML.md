@@ -55,8 +55,17 @@ classDiagram
         +DateTime createdAt
     }
 
+    class WeightLog {
+        +String id
+        +String userId
+        +Float rawWeight
+        +Float trendWeight
+        +DateTime createdAt
+    }
+
     User "1" --> "*" Meal : meals
     User "1" --> "*" TargetPeriod : targetPeriods
+    User "1" --> "*" WeightLog : weightLogs
 ```
 
 ---
@@ -244,6 +253,13 @@ classDiagram
         +getTargetsForDate(userId, date) Promise~MacroTargets~
     }
 
+    class ScientificService {
+        +calculateEMA(rawCurrent, trendPrevious) number
+        +calculateAdaptiveTDEE(meals, weights) number
+        +predictPlateau(tdeeReal, tdeeInitial) boolean
+        +getTrajectory(currentWeight, target, tdeeReal) TrajectoryPoint[]
+    }
+
     class ChatMealSummaryService {
         -PrismaService prisma
         -TargetPeriodsService targetPeriodsService
@@ -312,6 +328,10 @@ classDiagram
     OnboardingController --> OnboardingService
     OnboardingController --> UsersService
     OnboardingController --> TargetPeriodsService
+
+    MealsService --> ScientificService
+    OnboardingService --> ScientificService
+    ChatMealSummaryService --> ScientificService
 
     TargetPeriodsService --> PrismaService
 
