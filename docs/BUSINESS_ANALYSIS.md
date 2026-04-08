@@ -40,18 +40,17 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 | profile (age,     |              | calories, protein |
 |   gender, height, |              | carbs, fats       |
 |   weight, goal)   |              | healthScore (1-10)|
-| macroTargets      |              | imageUrl          |
-+-------------------+              +-------------------+
-        |
++-------------------+              | imageUrl          |
+        |                          +-------------------+
         | 1    *
         v
 +-------------------+
-|   DailyTarget     |
+|   TargetPeriod    |
 |-------------------|
-| date              |
+| startDate, endDate|
+| goal              |
 | calories, protein |
 | carbs, fats       |
-| healthScore       |
 +-------------------+
 ```
 
@@ -63,10 +62,11 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 
 - New users MUST complete onboarding before accessing the dashboard.
 - BMR is calculated via Mifflin-St Jeor equation, adjusted by activity level (TDEE).
-- Goal modifiers: weight_loss/cutting = -500 kcal; muscle_gain = +500 kcal; maintenance/health = TDEE.
-- Protein: 1.8 g/kg (maintenance), 2.0 g/kg (cutting), 2.2 g/kg (muscle gain).
+- Activity Level mapping: 0-2 workouts = sedentary (1.2), 3-5 = light (1.375), 6+ = moderate (1.55).
+- Goal modifiers: weight_loss = -500 kcal (Safety floor: min 1200 kcal); muscle_gain = +500 kcal; maintenance = TDEE.
+- Protein: 1.8 g/kg (maintenance), 2.0 g/kg (weight loss), 2.2 g/kg (muscle gain).
 - Fats: 0.9 g/kg. Carbs: remaining calories / 4.
-- Onboarding is considered complete when user targets differ from defaults (2000/150/250/65).
+- Projected Date: calculated using 7700 kcal per 1kg of weight difference (targetWeight - current weight).
 
 ### BR-2: Meal Analysis
 
@@ -81,10 +81,11 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 - After logging, the daily summary is recalculated and returned.
 - Health score: use AI-provided score if available, otherwise calculate from macro ratios.
 
-### BR-4: Daily Targets
+### BR-4: Target Periods & History
 
-- Each date can have its own daily target (overrides user defaults).
-- If no daily target exists for a date, one is auto-created from user defaults.
+- Targets are not stored per-day, but in `TargetPeriods` with a start/end date.
+- The system queries the "active" target period for any given date (latest period starting on or before that date).
+- Updating targets closes the previous period (sets `endDate`) and opens a new one.
 - Remaining = max(0, target - consumed). Never negative.
 
 ### BR-5: Authentication & Authorization
@@ -121,8 +122,8 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 | Meal Photo Upload & Storage | Image + Meals | Done |
 | Meal Logging | Meals | Done |
 | Daily Summary (targets/consumed/remaining) | Meals | Done |
-| Per-Day Custom Targets | DailyTargets | Done |
-| Health Score (per meal + daily) | Meals + DailyTargets | Done |
+| Target Period Tracking (Historical) | TargetPeriods | Done |
+| Health Score (per meal) | Meals | Done |
 | History & Date Range Queries | Meals | Done |
 | Analytics Charts | Frontend (History) | Done |
 | AI Nutrition Coach Chat | Chat + AI | Done |

@@ -22,12 +22,6 @@ classDiagram
         +String activityLevel
         +String goal
         +Float targetWeight
-        +DateTime targetDate
-        +String[] dietaryPreferences
-        +Int targetCalories
-        +Float targetProtein
-        +Float targetCarbs
-        +Float targetFats
         +DateTime createdAt
         +DateTime updatedAt
     }
@@ -48,21 +42,21 @@ classDiagram
         +DateTime updatedAt
     }
 
-    class DailyTarget {
+    class TargetPeriod {
         +String id
         +String userId
-        +DateTime date
+        +DateTime startDate
+        +DateTime endDate
         +Int calories
         +Float protein
         +Float carbs
         +Float fats
-        +Int healthScore
+        +String goal
         +DateTime createdAt
-        +DateTime updatedAt
     }
 
     User "1" --> "*" Meal : meals
-    User "1" --> "*" DailyTarget : dailyTargets
+    User "1" --> "*" TargetPeriod : targetPeriods
 ```
 
 ---
@@ -78,6 +72,8 @@ classDiagram
         +number protein
         +number carbs
         +number fats
+        +number estimatedDays
+        +string projectedDate
     }
 
     class Meal {
@@ -124,8 +120,6 @@ classDiagram
         +string activityLevel
         +string goal
         +number targetWeight
-        +Date targetDate
-        +string[] dietaryPreferences
     }
 
     class ChatMessage {
@@ -180,7 +174,7 @@ classDiagram
         +getUserByEmail(email: string) Promise
         +validateUser(email, password) Promise
         +updateUserProfile(userId, profile) Promise~void~
-        +updateUserTargets(userId, targets) Promise~void~
+        +updateUserTargets(userId, targets, goal) Promise~void~
         +updateUserRole(userId, role) Promise~void~
         +getUserTargets(userId) Promise~MacroTargets~
     }
@@ -195,13 +189,7 @@ classDiagram
 
     class MealsService {
         -PrismaService prisma
-        -DailyTargetsService dailyTargetsService
-        +create(dto: CreateMealDto, userId) Promise~Meal~
-        +findAll(userId) Promise~Meal[]~
-        +findByDate(userId, date) Promise~Meal[]~
-        +getTodayMeals(userId) Promise~Meal[]~
         +getDailySummary(userId, date?) Promise~DailySummary~
-        +recalculateDailySummary(userId, date?) Promise~DailySummary~
         +getHistory(userId, startDate, endDate) Promise~DailySummary[]~
         -calculateHealthScore(meal) number
     }
@@ -214,7 +202,6 @@ classDiagram
         +analyzeMeal(file) Promise~MealAnalysis~
         +getTodayMeals(user) Promise
         +logMeal(user, dto) Promise
-        +recalculateDailySummary(user, date?) Promise
         +getHistory(user, startDate, endDate) Promise
     }
 
@@ -247,38 +234,19 @@ classDiagram
     class OnboardingController {
         -OnboardingService onboardingService
         -UsersService usersService
-        -DailyTargetsService dailyTargetsService
+        -TargetPeriodsService targetPeriodsService
         +calculateRecommendations(data) Promise~MacroTargetsDto~
         +approveRecommendations(user, targets) Promise
     }
 
-    class DailyTargetsService {
+    class TargetPeriodsService {
         -PrismaService prisma
-        -UsersService usersService
-        +getTargetsForDate(userId, date, autoCreate) Promise~MacroTargets~
-        +setDailyTargets(userId, date, targets, healthScore?) Promise~void~
-        +deleteDailyTargets(userId, date) Promise~void~
-        +getDailyTargetsRange(userId, start, end, autoCreate) Promise
-        +ensureDailyTargetExists(userId, date) Promise~void~
-    }
-
-    class DailyTargetsController {
-        -DailyTargetsService dailyTargetsService
-        +getDailyTargets(user, date, autoCreate?) Promise
-        +setDailyTargets(user, date, body) Promise
-        +deleteDailyTargets(user, date) Promise
-        +getDailyTargetsRange(user, startDate, endDate) Promise
-    }
-
-    class ChatController {
-        -AiService aiService
-        -ChatMealSummaryService chatMealSummaryService
-        +askMeatCoach(user, dto) Promise
+        +getTargetsForDate(userId, date) Promise~MacroTargets~
     }
 
     class ChatMealSummaryService {
         -PrismaService prisma
-        -DailyTargetsService dailyTargetsService
+        -TargetPeriodsService targetPeriodsService
         +getDailySummary(userId, date?) Promise~DailySummary~
         -findMealsByDate(userId, date) Promise~Meal[]~
     }
@@ -325,7 +293,6 @@ classDiagram
     AppModule ..> UsersController
     AppModule ..> MealsController
     AppModule ..> OnboardingController
-    AppModule ..> DailyTargetsController
     AppModule ..> ChatController
     AppModule ..> MetricsController
 
@@ -344,16 +311,14 @@ classDiagram
 
     OnboardingController --> OnboardingService
     OnboardingController --> UsersService
-    OnboardingController --> DailyTargetsService
+    OnboardingController --> TargetPeriodsService
 
-    DailyTargetsController --> DailyTargetsService
-    DailyTargetsService --> PrismaService
-    DailyTargetsService --> UsersService
+    TargetPeriodsService --> PrismaService
 
     ChatController --> AiService
     ChatController --> ChatMealSummaryService
     ChatMealSummaryService --> PrismaService
-    ChatMealSummaryService --> DailyTargetsService
+    ChatMealSummaryService --> TargetPeriodsService
 
     MetricsController --> MetricsService
 

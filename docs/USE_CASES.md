@@ -31,16 +31,14 @@ graph TB
         UC11[UC-11: View Meal History]
     end
 
-    subgraph "User Management"
+    subgraph "Target Management"
         UC12[UC-12: Manage User Profile]
-        UC13[UC-13: Update Global Macro Targets]
-        UC14[UC-14: Set Custom Daily Target]
+        UC13[UC-13: Update Target Plan]
+        UC17[UC-17: Recalculate Recommendations]
     end
 
     subgraph "Settings"
-        UC15[UC-15: Reset Daily Target]
         UC16[UC-16: Chat with Nutrition Coach]
-        UC17[UC-17: Recalculate Plans]
     end
 
     U --> UC1
@@ -54,8 +52,6 @@ graph TB
     U --> UC11
     U --> UC12
     U --> UC13
-    U --> UC14
-    U --> UC15
     U --> UC16
     U --> UC17
 
@@ -63,7 +59,6 @@ graph TB
     UC5 --> UC7
     UC8 --> AI
     UC8 --> IMG
-    UC14 --> UC10
     UC16 --> AI
     UC17 --> UC6
 ```
@@ -125,11 +120,11 @@ graph TB
 |-------|-------|
 | **Actor** | User (new) |
 | **Precondition** | User is authenticated; targets are defaults (2000/150/250/65) |
-| **Trigger** | App detects default targets on login |
+| **Trigger** | App detects un-onboarded status on login |
 | **Relationships** | `<<include>>` UC-6 (Calculate), UC-7 (Approve) |
-| **Main Flow** | 1. Step 1: Select gender (male/female/other)<br>2. Step 2: Enter height (cm)<br>3. Step 3: Enter weight (kg)<br>4. Step 4: Enter birth date + workouts per week<br>5. Step 5: Select goal (weight_loss/muscle_gain/maintenance/cutting/health)<br>6. System calculates recommendations (UC-6)<br>7. Step 6: User reviews and approves targets (UC-7) |
-| **Postcondition** | User Profile entry in DB is fully populated; OnboardingStatus=Complete |
-| **Exception** | E1: User exits before Step 6 -> No changes persisted to targets or profile metrics. |
+| **Main Flow** | 1. Step 1: Select gender (male/female/other)<br>2. Step 2: Enter height (cm)<br>3. Step 3: Enter weight (kg)<br>4. Step 4: Enter birth date + workouts per week<br>5. Step 5: Select goal (weight_loss/muscle_gain/maintenance)<br>6. Step 5 (cont.): Enter target weight (if weight_loss or muscle_gain)<br>7. System calculates recommendations + projected date (UC-6)<br>8. Step 6: User reviews recommended goals, projected reach date, and approves (UC-7) |
+| **Postcondition** | User Profile entry in DB populated; Active TargetPeriod created |
+| **Exception** | E1: User exits before Step 6 -> No changes persisted. |
 
 ---
 
@@ -138,8 +133,8 @@ graph TB
 | Field | Value |
 |-------|-------|
 | **Actor** | System (triggered by UC-5 or UC-20) |
-| **Main Flow** | 1. Calculate age from birth date<br>2. Map workouts/week to activity level (0-2: sedentary, 3-5: moderate, 6+: very_active)<br>3. Calculate BMR via Mifflin-St Jeor<br>4. Calculate TDEE = BMR * activity multiplier<br>5. Adjust for goal: loss/cutting = -500, gain = +500, maintenance = TDEE<br>6. Calculate protein (1.8-2.2 g/kg based on goal)<br>7. Calculate fats (0.9 g/kg)<br>8. Calculate carbs (remaining calories / 4)<br>9. Return { calories, protein, carbs, fats } |
-| **Postcondition** | Recommendations ready for user review |
+| **Main Flow** | 1. Calculate age from birth date<br>2. Map workouts/week to activity level (0-2: sedentary, 3-5: light, 6+: moderate)<br>3. Calculate BMR via Mifflin-St Jeor<br>4. Calculate TDEE = BMR * activity multiplier<br>5. Adjust for goal: loss = -500 (min 1200 kcal floor), gain = +500, maintenance = TDEE<br>6. Calculate protein (1.8-2.2 g/kg based on goal)<br>7. Calculate fats (0.9 g/kg)<br>8. Calculate carbs (remaining calories / 4)<br>9. Calculate Projected Date: (weight diff * 7700) / 500 shift<br>10. Return { macros, estimatedDays, projectedDate } |
+| **Postcondition** | Recommendations + Goal ETA ready for review |
 
 ---
 
@@ -149,8 +144,8 @@ graph TB
 |-------|-------|
 | **Actor** | User |
 | **Precondition** | Recommendations have been calculated |
-| **Main Flow** | 1. User reviews calculated targets<br>2. User clicks "Approve"<br>3. System saves targets to user profile<br>4. System creates/updates today's daily target |
-| **Postcondition** | Onboarding complete; dashboard accessible |
+| **Main Flow** | 1. User reviews calculated targets and Goal ETA<br>2. User clicks "Approve"<br>3. System saves profile metrics to User model<br>4. System closes current TargetPeriod (if any) and creates new active TargetPeriod |
+| **Postcondition** | Onboarding complete; Dashboard targets synchronized |
 
 ---
 
@@ -186,7 +181,7 @@ graph TB
 |-------|-------|
 | **Actor** | User |
 | **Trigger** | Dashboard loads or user selects a date |
-| **Main Flow** | 1. Frontend requests GET /api/meals/daily-summary?date=YYYY-MM-DD<br>2. Backend fetches meals for the date<br>3. Backend fetches/auto-creates daily target<br>4. Backend calculates consumed (sum of meals) and remaining (target - consumed, min 0)<br>5. Returns { date, targets, consumed, remaining, meals } |
+| **Main Flow** | 1. Frontend requests GET /api/meals/daily-summary?date=YYYY-MM-DD<br>2. Backend fetches meals for the date<br>3. Backend fetches the latest TargetPeriod starting at or before the date<br>4. Backend calculates consumed (sum of meals) and remaining (target - consumed, min 0)<br>5. Returns { date, targets, consumed, remaining, meals } |
 | **Postcondition** | Dashboard shows macro progress bars and meal list |
 
 ---
@@ -213,36 +208,20 @@ graph TB
 
 ---
 
-### UC-13: Update Global Macro Targets
-
-| Field | Value |
-|-------|-------|
+---
+| UC-13: Update Target Plan |
+|---|---|
 | **Actor** | User |
-| **Main Flow** | 1. User enters custom calories/protein/carbs/fats in Settings<br>2. Backend updates User model defaults |
-| **Postcondition** | Default targets updated for all future days |
+| **Main Flow** | 1. User adjusts Goal or Target Weight in Settings<br>2. System recalculates macros and projections<br>3. User clicks "Approve"<br>4. System saves profile metrics and initializes new TargetPeriod |
+| **Postcondition** | New tracking phase started; dashboard updated |
 
 ---
 
-### UC-14: Set Custom Daily Target
+### [REMOVED] UC-14: Set Custom Daily Target
+Individual day target overrides are no longer supported. Users update their global plan which applies to today and onwards.
 
-| Field | Value |
-|-------|-------|
-| **Actor** | User |
-| **Precondition** | User is on the Dashboard |
-| **Trigger** | User clicks the "Edit" icon next to Daily Goals |
-| **Main Flow** | 1. System opens DailyTargetModal<br>2. User enters custom calories/macros for the current date<br>3. System calls `PUT /api/daily-targets?date=YYYY-MM-DD`<br>4. Dashboard refreshes to show adjusted goals |
-| **Postcondition** | Targets for the selected date are overridden |
-
----
-
-### UC-15: Reset Daily Target to Default
-
-| Field | Value |
-|-------|-------|
-| **Actor** | User |
-| **Trigger** | User clicks "Reset to Default" in DailyTargetModal |
-| **Main Flow** | 1. System calls `DELETE /api/daily-targets?date=YYYY-MM-DD`<br>2. Backend removes override record<br>3. System falls back to User Global Defaults (UC-13)<br>4. Dashboard refreshes |
-| **Postcondition** | Daily goals revert to global plan |
+### [REMOVED] UC-15: Reset Daily Target to Default
+Replaced by the continuous TargetPeriod system.
 
 ---
 
@@ -285,8 +264,6 @@ graph TB
 | UC-10 View Daily Summary | X | | | |
 | UC-11 View Meal History | X | | | |
 | UC-12 Manage User Profile | X | | | |
-| UC-13 Update Macro Targets | X | | | |
-| UC-14 Set Custom Daily Target | X | | | |
-| UC-15 Reset Daily Target | X | | | |
+| UC-13 Update Target Plan | X | | | |
 | UC-16 Chat with Coach | X | | X | |
-| UC-17 Recalculate Plans | X | | | |
+| UC-17 Recalculate Recommendations | X | | | |

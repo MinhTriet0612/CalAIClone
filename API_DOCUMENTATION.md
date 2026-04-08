@@ -8,24 +8,18 @@ After starting the backend server, open this URL in your browser to access the i
 
 ## 🔐 Authentication
 
-All API endpoints (except documentation) require authentication using Firebase ID tokens.
+All API endpoints (except documentation) require authentication using standard JWT Access Tokens.
 
 ### How to Get a Token
 
-1. **From Frontend**: After logging in, the token is automatically stored in `localStorage` as `firebase_id_token`
-2. **From Browser Console**:
-   ```javascript
-   // If using Firebase Auth in browser
-   const user = firebase.auth().currentUser;
-   const token = await user.getIdToken();
-   console.log(token);
-   ```
+1. **From Login Response**: When you call `POST /api/auth/login`, the server returns an `accessToken`.
+2. **From Frontend**: After logging in, the token is stored in `localStorage` as `token`.
 
 ### Using the Token in Swagger
 
 1. Open Swagger UI: http://localhost:3001/api-docs
 2. Click the **Authorize** button (🔒) at the top
-3. Enter your Firebase ID token in the `JWT-auth` field
+3. Enter your JWT token in the `JWT-auth` field
 4. Click **Authorize**
 5. Now you can test all endpoints!
 
@@ -37,7 +31,7 @@ All API endpoints (except documentation) require authentication using Firebase I
 Verify if the authentication token is valid.
 
 **Headers:**
-- `Authorization: Bearer <firebase_id_token>`
+- `Authorization: Bearer <jwt_access_token>`
 
 **Response:**
 ```json
@@ -59,7 +53,7 @@ Verify if the authentication token is valid.
 Get current authenticated user's information.
 
 **Headers:**
-- `Authorization: Bearer <firebase_id_token>`
+- `Authorization: Bearer <jwt_access_token>`
 
 **Response:**
 ```json
@@ -86,10 +80,9 @@ Update user profile (age, height, weight, goals, etc.).
   "gender": "male",
   "height": 175,
   "weight": 70,
-  "activityLevel": "moderate",
+  "workoutsPerWeek": 4,
   "goal": "weight_loss",
-  "targetWeight": 65,
-  "dietaryPreferences": ["vegetarian"]
+  "targetWeight": 65
 }
 ```
 
@@ -97,7 +90,7 @@ Update user profile (age, height, weight, goals, etc.).
 Update daily calorie and macro targets.
 
 **Headers:**
-- `Authorization: Bearer <firebase_id_token>`
+- `Authorization: Bearer <jwt_access_token>`
 - `Content-Type: application/json`
 
 **Body:**
@@ -114,7 +107,7 @@ Update daily calorie and macro targets.
 Update a user's role. Requires admin privileges.
 
 **Headers:**
-- `Authorization: Bearer <admin_firebase_id_token>`
+- `Authorization: Bearer <admin_jwt_access_token>`
 - `Content-Type: application/json`
 
 **Body:**
@@ -133,7 +126,7 @@ Update a user's role. Requires admin privileges.
 Get daily calorie summary with targets, consumed, remaining, and meals.
 
 **Headers:**
-- `Authorization: Bearer <firebase_id_token>`
+- `Authorization: Bearer <jwt_access_token>`
 
 **Query Parameters:**
 - `date` (optional): Date in YYYY-MM-DD format (defaults to today)
@@ -168,7 +161,7 @@ Get daily calorie summary with targets, consumed, remaining, and meals.
 Analyze a meal image using AI to get nutritional information.
 
 **Headers:**
-- `Authorization: Bearer <firebase_id_token>`
+- `Authorization: Bearer <jwt_access_token>`
 - `Content-Type: multipart/form-data`
 
 **Body:**
@@ -190,7 +183,7 @@ Analyze a meal image using AI to get nutritional information.
 Log a meal to the daily summary.
 
 **Headers:**
-- `Authorization: Bearer <firebase_id_token>`
+- `Authorization: Bearer <jwt_access_token>`
 - `Content-Type: application/json`
 
 **Body:**
@@ -218,7 +211,7 @@ Log a meal to the daily summary.
 3. Go to Console tab
 4. Run:
    ```javascript
-   localStorage.getItem('firebase_id_token')
+   localStorage.getItem('token')
    ```
 5. Copy the token
 
@@ -267,8 +260,8 @@ curl -X POST "http://localhost:3001/api/meals/analyze" \
 
 ## 🔒 Security Notes
 
-- All endpoints require valid Firebase ID tokens
-- Tokens expire after 1 hour (Firebase default)
+- All endpoints require valid JWT Access Tokens
+- Tokens expire based on server configuration (default: 24h)
 - Invalid tokens will return 401 Unauthorized
 - Admin-only endpoints require `role: "admin"` in user document
 
