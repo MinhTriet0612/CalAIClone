@@ -520,7 +520,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant User
+    participant D as Dieter
     participant Frontend
     participant MealsController
     participant AiService
@@ -528,7 +528,7 @@ sequenceDiagram
     participant ImageService
     participant FreeImageHost
 
-    User->>Frontend: Upload meal photo
+    D->>Frontend: Upload meal photo
     Frontend->>MealsController: POST /api/meals/analyze (multipart)
     MealsController->>AiService: analyzeMealImage(buffer, mime)
     AiService->>AiService: Convert to base64
@@ -546,10 +546,10 @@ sequenceDiagram
     end
 
     MealsController-->>Frontend: MealAnalysis
-    Frontend->>User: Show MealAnalysisModal
+    Frontend->>D: Show MealAnalysisModal
 
-    User->>Frontend: Click Confirm
+    D->>Frontend: Click Confirm
     Frontend->>MealsController: POST /api/meals/log
     MealsController-->>Frontend: Updated DailySummary
-    Frontend->>User: Update dashboard
+    Frontend->>D: Update dashboard
 ```

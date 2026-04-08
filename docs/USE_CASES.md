@@ -5,126 +5,86 @@
 ```mermaid
 graph TB
     subgraph Actors
-        U((User))
-        A((Admin))
-        AI((Google Gemini AI))
+        D((Dieter))
+        SA((System Administrator))
+        AI((AI Nutrition Consultant))
         IMG((Image Host))
     end
 
-    subgraph "Authentication"
-        UC1[UC-1: Register]
-        UC2[UC-2: Login]
-        UC3[UC-3: Verify Token]
-        UC4[UC-4: Logout]
+    subgraph "Onboarding & Account"
+        UC5[UC-5: Establish Nutrition Plan]
+        UC12[UC-12: Manage Health Profile]
+        UC13[UC-13: Update Target Plan]
     end
 
-    subgraph "Onboarding"
-        UC5[UC-5: Complete Onboarding]
-        UC6[UC-6: Calculate Macro Targets]
-        UC7[UC-7: Approve Recommendations]
-    end
-
-    subgraph "Meal Management"
+    subgraph "Core Nutrition Tracking"
         UC8[UC-8: Analyze Meal Photo]
-        UC9[UC-9: Log Meal]
+        UC9[UC-9: Record Food Intake]
         UC10[UC-10: View Daily Summary]
         UC11[UC-11: View Meal History]
     end
 
-    subgraph "Target Management"
-        UC12[UC-12: Manage User Profile]
-        UC13[UC-13: Update Target Plan]
+    subgraph "AI Services"
+        UC16[UC-16: Request Nutritional Advice]
         UC17[UC-17: Recalculate Recommendations]
     end
 
-    subgraph "Settings"
-        UC16[UC-16: Chat with Nutrition Coach]
-    end
+    D --> UC5
+    D --> UC8
+    D --> UC9
+    D --> UC10
+    D --> UC11
+    D --> UC12
+    D --> UC13
+    D --> UC16
+    D --> UC17
 
-    U --> UC1
-    U --> UC2
-    U --> UC3
-    U --> UC4
-    U --> UC5
-    U --> UC8
-    U --> UC9
-    U --> UC10
-    U --> UC11
-    U --> UC12
-    U --> UC13
-    U --> UC16
-    U --> UC17
-
-    UC5 --> UC6
-    UC5 --> UC7
     UC8 --> AI
     UC8 --> IMG
     UC16 --> AI
-    UC17 --> UC6
+    UC17 --> UC5
 ```
 
 ---
 
 ## 2. Use Case Descriptions
 
-### UC-1: Register
+---
 
-| Field | Value |
-|-------|-------|
-| **Actor** | User |
-| **Precondition** | User has no existing account |
-| **Trigger** | User clicks "Sign Up" |
-| **Main Flow** | 1. User enters email and password<br>2. System validates email uniqueness<br>3. System hashes password (bcrypt, 10 rounds)<br>4. System creates user with role "user"<br>5. System generates JWT token<br>6. System returns token + user info |
-| **Postcondition** | User is authenticated; token stored in localStorage |
-| **Exception** | E1: Email already exists -> UnauthorizedException |
+[SECTION REMOVED: System Procedures (Login/Register/Logout) are internal security measures and omitted from business use case analysis as per SQA requirements.]
 
 ---
 
-### UC-2: Login
-
-| Field | Value |
-|-------|-------|
-| **Actor** | User |
-| **Precondition** | User has a registered account |
-| **Trigger** | User clicks "Sign In" |
-| **Main Flow** | 1. User enters email and password<br>2. System looks up user by email<br>3. System compares password hash with bcrypt<br>4. System generates JWT token<br>5. System returns token + user info |
-| **Postcondition** | User is authenticated |
-| **Exception** | E1: Email not found -> UnauthorizedException<br>E2: Wrong password -> UnauthorizedException |
-
 ---
 
-### UC-3: Verify Token
+### UC-5: Establish Nutrition Plan
 
 | Field | Value |
 |-------|-------|
-| **Actor** | User (automatic on page load) |
-| **Precondition** | Token exists in localStorage |
-| **Main Flow** | 1. Frontend sends POST /api/auth/verify with Bearer token<br>2. JwtAuthGuard verifies token signature and expiry<br>3. Guard loads user from database<br>4. Returns `{ valid: true, user }` |
-| **Exception** | E1: Token invalid/expired -> 401, frontend clears token and shows login |
-
----
-
-### UC-4: Logout
-
-| Field | Value |
-|-------|-------|
-| **Actor** | User |
-| **Main Flow** | 1. User clicks "Logout"<br>2. Frontend clears JWT from localStorage<br>3. Frontend clears user state<br>4. UI redirects to Login screen |
-| **Postcondition** | User is unauthenticated |
-
----
-
-### UC-5: Complete Onboarding
-
-| Field | Value |
-|-------|-------|
-| **Actor** | User (new) |
-| **Precondition** | User is authenticated; targets are defaults (2000/150/250/65) |
+| **Actor** | Dieter (new) |
+| **Precondition** | Dieter is authenticated; targets are defaults |
 | **Trigger** | App detects un-onboarded status on login |
-| **Relationships** | `<<include>>` UC-6 (Calculate), UC-7 (Approve) |
-| **Main Flow** | 1. Step 1: Select gender (male/female/other)<br>2. Step 2: Enter height (cm)<br>3. Step 3: Enter weight (kg)<br>4. Step 4: Enter birth date + workouts per week<br>5. Step 5: Select goal (weight_loss/muscle_gain/maintenance)<br>6. Step 5 (cont.): Enter target weight (if weight_loss or muscle_gain)<br>7. System calculates recommendations + projected date (UC-6)<br>8. Step 6: User reviews recommended goals, projected reach date, and approves (UC-7) |
-| **Postcondition** | User Profile entry in DB populated; Active TargetPeriod created |
-| **Exception** | E1: User exits before Step 6 -> No changes persisted. |
+| **Main Flow** | 1. Step 1: Select gender (male/female/other)<br>2. Step 2: Enter height (cm)<br>3. Step 3: Enter weight (kg)<br>4. Step 4: Enter birth date + workouts per week<br>5. Step 5: Select goal (weight_loss/muscle_gain/maintenance)<br>6. Step 5 (cont.): Enter target weight (if weight_loss or muscle_gain)<br>7. System calculates recommendations + projected date<br>8. Step 6: Dieter reviews recommended goals, projected reach date, and approves |
+| **Postcondition** | Dieter Profile entry in DB populated; Active TargetPeriod created |
+| **Exception** | E1: Dieter exits before Step 6 -> No changes persisted. |
+
+#### Sequence Diagram (UC-5)
+```mermaid
+sequenceDiagram
+    participant D as Dieter
+    participant S as Cal AI Software
+    participant DB as Database
+
+    D->>S: getRecommendations(gender, height, weight, birthDate, workoutsPerWeek, goal, targetWeight)
+    S->>S: calculateTDEE(weight, height, age, activity)
+    S->>S: applySafetyFloor(min: 1200)
+    S-->>D: returnRecommendations(calories, protein, carbs, fats, projectedDate)
+    D->>S: approveTargets(calories, protein, carbs, fats, goal)
+    S->>DB: createTargetPeriod(userId, calories, protein, carbs, fats, startDate, goal)
+    S->>DB: updateUserProfile(userId, height, weight, goal)
+    DB-->>S: status: SUCCESS
+    S-->>D: status: PLAN_ACTIVE
+```
 
 ---
 
@@ -163,15 +123,34 @@ graph TB
 
 ---
 
-### UC-9: Log Meal
+### UC-9: Record Food Intake
 
 | Field | Value |
 |-------|-------|
-| **Actor** | User |
-| **Precondition** | User has reviewed meal analysis (UC-8) |
-| **Trigger** | User clicks "Confirm" in MealAnalysisModal |
+| **Actor** | Dieter |
+| **Precondition** | Dieter has reviewed meal analysis (UC-8) |
+| **Trigger** | Dieter clicks "Confirm" in MealAnalysisModal |
 | **Main Flow** | 1. Frontend sends meal data (name, foodItems, macros, imageUrl)<br>2. Backend calculates health score (use provided or compute from macro ratios)<br>3. Backend creates Meal record with current date/time<br>4. Backend recalculates daily summary<br>5. Returns updated DailySummary |
 | **Postcondition** | Meal saved; dashboard updated with new consumed/remaining values |
+
+#### Sequence Diagram (UC-9)
+```mermaid
+sequenceDiagram
+    participant D as Dieter
+    participant S as Cal AI Software
+    participant AI as AI Nutrition Consultant
+    participant DB as Database
+
+    D->>S: analyzeMeal(imageFile)
+    S->>AI: analyzeVisuals(imageBytes)
+    AI-->>S: returnAnalysis(calories, protein, carbs, fats, foodItems)
+    S-->>D: displayAnalysisData()
+    D->>S: recordMeal(name, calories, protein, carbs, fats, date)
+    S->>DB: createMealRecord(userId, macros, name, date)
+    DB-->>S: status: CREATED
+    S->>S: updateDailyAggregates(userId, date)
+    S-->>D: returnDailySummary(totalConsumed, remaining)
+```
 
 ---
 
@@ -179,8 +158,8 @@ graph TB
 
 | Field | Value |
 |-------|-------|
-| **Actor** | User |
-| **Trigger** | Dashboard loads or user selects a date |
+| **Actor** | Dieter |
+| **Trigger** | Dashboard loads or Dieter selects a date |
 | **Main Flow** | 1. Frontend requests GET /api/meals/daily-summary?date=YYYY-MM-DD<br>2. Backend fetches meals for the date<br>3. Backend fetches the latest TargetPeriod starting at or before the date<br>4. Backend calculates consumed (sum of meals) and remaining (target - consumed, min 0)<br>5. Returns { date, targets, consumed, remaining, meals } |
 | **Postcondition** | Dashboard shows macro progress bars and meal list |
 
@@ -190,29 +169,30 @@ graph TB
 
 | Field | Value |
 |-------|-------|
-| **Actor** | User |
-| **Trigger** | User opens History tab |
+| **Actor** | Dieter |
+| **Trigger** | Dieter opens History tab |
 | **Main Flow** | 1. Frontend sends date range (startDate, endDate)<br>2. Backend fetches all meals and daily targets in range<br>3. Backend groups meals by date, calculates per-day summaries<br>4. Returns array of DailySummary sorted by date desc<br>5. Frontend renders history list + analytics charts (BarChart) |
-| **Postcondition** | User sees historical nutrition data |
+| **Postcondition** | Dieter sees historical nutrition data |
 
 ---
 
-### UC-12: Manage User Profile
+### UC-12: Manage Health Profile
 
 | Field | Value |
 |-------|-------|
-| **Actor** | User |
-| **Main Flow** | 1. User navigates to Settings/Profile<br>2. System displays current info (height, weight, age, etc.) via `GET /api/users/me`<br>3. User modifies any field<br>4. User clicks "Save"<br>5. System validates and updates DB via `PUT /api/users/profile` |
-| **Postcondition** | User metadata updated in DB |
+| **Actor** | Dieter |
+| **Main Flow** | 1. Dieter navigates to Settings/Profile<br>2. System displays current info (height, weight, age, etc.) via `GET /api/users/me`<br>3. Dieter modifies any field<br>4. Dieter clicks "Save"<br>5. System validates and updates DB via `PUT /api/users/profile` |
+| **Postcondition** | Dieter metadata updated in DB |
 | **Exception** | E1: Validation error (e.g. invalid weight) -> System returns 400. |
 
 ---
 
----
-| UC-13: Update Target Plan |
-|---|---|
-| **Actor** | User |
-| **Main Flow** | 1. User adjusts Goal or Target Weight in Settings<br>2. System recalculates macros and projections<br>3. User clicks "Approve"<br>4. System saves profile metrics and initializes new TargetPeriod |
+### UC-13: Update Target Plan
+
+| Field | Value |
+|-------|-------|
+| **Actor** | Dieter |
+| **Main Flow** | 1. Dieter adjusts Goal or Target Weight in Settings<br>2. System recalculates macros and projections<br>3. Dieter clicks "Approve"<br>4. System saves profile metrics and initializes new TargetPeriod |
 | **Postcondition** | New tracking phase started; dashboard updated |
 
 ---
@@ -225,45 +205,70 @@ Replaced by the continuous TargetPeriod system.
 
 ---
 
-### UC-16: Chat with Nutrition Coach
+### UC-16: Request Nutritional Advice
 
 | Field | Value |
 |-------|-------|
-| **Actor** | User, Google Gemini AI (External) |
-| **Trigger** | User navigates to Meal Chat and sends a message |
-| **Main Flow** | 1. Frontend sends prompt + conversation history<br>2. Backend loads user's current daily summary (UC-10)<br>3. Backend builds prompt with: guardrails, client stats, history, user message<br>4. Gemini generates coaching response (<= 180 words, plain text)<br>5. Backend strips any markdown from response<br>6. Returns { reply } |
+| **Actor** | Dieter, AI Nutrition Consultant |
+| **Trigger** | Dieter navigates to Meal Chat and sends a message |
+| **Main Flow** | 1. Frontend sends prompt + conversation history<br>2. Backend loads Dieter's current daily summary (UC-10)<br>3. Backend builds prompt with: guardrails, client stats, history, user message<br>4. AI generates coaching response (<= 180 words, plain text)<br>5. Backend strips any markdown from response<br>6. Returns { reply } |
 | **Postcondition** | Chat message displayed in UI; summary session context updated |
-| **Exception** | E1: User asks for medical/pharmaceutical advice -> System triggers "Medical Disclaimer" guardrail response<br>E2: Gemini safety filter trigger -> Generic "I cannot answer this" response |
+| **Exception** | E1: Dieter asks for medical/pharmaceutical advice -> System triggers "Medical Disclaimer" guardrail response<br>E2: AI safety filter trigger -> Generic "I cannot answer this" response |
+
+#### Sequence Diagram (UC-16)
+```mermaid
+sequenceDiagram
+    participant D as Dieter
+    participant S as Cal AI Software
+    participant AI as AI Nutrition Consultant
+
+    D->>S: sendChatMessage(messageContent, historyContext)
+    S->>S: applyMedicalGuardrails(messageContent)
+    S->>AI: getCoachingAdvice(messageContent, dailyStats, history)
+    AI-->>S: returnPlainTextAdvice(messageText)
+    S-->>D: displayCoachReply(reply)
+```
 
 ---
 
-### UC-17: Recalculate Plans
+### UC-17: Recalculate Recommendations
 
 | Field | Value |
 |-------|-------|
-| **Actor** | User |
-| **Relationships** | `<<include>>` UC-6 (Calculate), UC-7 (Approve) |
-| **Main Flow** | 1. User updates metrics in Settings<br>2. User clicks "Generate Recommendation"<br>3. System triggers calculation logic (UC-6)<br>4. User approves and updates global defaults (UC-7) |
+| **Actor** | Dieter |
+| **Main Flow** | 1. Dieter updates metrics in Settings<br>2. Dieter clicks "Generate Recommendation"<br>3. System triggers calculation logic<br>4. Dieter approves and updates global defaults |
 | **Postcondition** | Targets updated; dashboard reflects new values |
+
+#### Sequence Diagram (UC-17)
+```mermaid
+sequenceDiagram
+    participant D as Dieter
+    participant S as Cal AI Software
+    participant DB as Database
+
+    D->>S: updateMetrics(height, currentWeight, goal)
+    S->>S: recalculateBMR(metrics)
+    S->>S: recalculateTDEE()
+    S-->>D: previewNewTargets(calories, protein, carbs, fats)
+    D->>S: confirmRecalculation()
+    S->>DB: archiveCurrentPeriod()
+    S->>DB: createNewTargetPeriod(newMacros)
+    DB-->>S: status: SUCCESS
+    S-->>D: displayUpdatedDashboard()
+```
 
 ---
 
 ## 3. Actor-Use Case Matrix
 
-| Use Case | User | Admin | Gemini AI | Image Host |
+| Use Case | Dieter | System Admin | AI Nutrition Consultant | Image Host |
 |----------|:----:|:-----:|:---------:|:----------:|
-| UC-1 Register | X | | | |
-| UC-2 Login | X | | | |
-| UC-3 Verify Token | X | | | |
-| UC-4 Logout | X | | | |
-| UC-5 Complete Onboarding | X | | | |
-| UC-6 Calculate Targets | X | | | |
-| UC-7 Approve Recommendations | X | | | |
-| UC-8 Analyze Meal Photo | X | | X | X |
-| UC-9 Log Meal | X | | | |
-| UC-10 View Daily Summary | X | | | |
-| UC-11 View Meal History | X | | | |
-| UC-12 Manage User Profile | X | | | |
-| UC-13 Update Target Plan | X | | | |
-| UC-16 Chat with Coach | X | | X | |
-| UC-17 Recalculate Recommendations | X | | | |
+| UC-5 Establish Plan | X | | | |
+| UC-8 Analyze Photo | X | | X | X |
+| UC-9 Record Food | X | | | |
+| UC-10 View Summary | X | | | |
+| UC-11 View History | X | | | |
+| UC-12 Manage Profile | X | | | |
+| UC-13 Update Plan | X | | | |
+| UC-16 Request Advice | X | | X | |
+| UC-17 Recalculate | X | | | |

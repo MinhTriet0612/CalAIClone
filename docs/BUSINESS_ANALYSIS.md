@@ -10,8 +10,8 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 
 | Stakeholder | Role | Interest |
 |---|---|---|
-| End User | Primary consumer | Track calories, reach fitness/health goals |
-| Admin | System operator | Manage users, oversee platform |
+| Dieter | Primary consumer | Track calories, reach fitness/health goals |
+| System Administrator | System operator | Manage users, oversee platform |
 | AI Provider (Google Gemini) | External service | Provides meal image analysis and chat coaching |
 | Image Host (freeimage.host) | External service | Stores uploaded meal photos |
 | DevOps / SRE | Operations | Monitor uptime, performance, error rates |
@@ -30,7 +30,49 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 
 ---
 
-## 4. Business Domain Model
+### 4. Process Analysis
+
+#### 4.1. As-Is Process (Manual Nutrition Tracking)
+The current manual process is error-prone, time-consuming, and lacks historical consistency.
+
+```mermaid
+activityDiagram
+    start
+    :Dieter decides to track food;
+    :Dieter looks up food calorie table (online/book);
+    if (Food found?) then (yes)
+        :Dieter estimates portion size;
+        :Dieter calculates calories and macros;
+        :Dieter writes down in paper journal or note app;
+    else (no)
+        :Dieter guesses nutritional values;
+        :Risk of significant deviation;
+    endif
+    :Dieter manually sum daily totals;
+    :Dieter compare against guessed goal;
+    stop
+```
+
+#### 4.2. To-Be Process (Cal AI Assisted)
+The proposed solution automates data entry and uses AI for scientific accuracy.
+
+```mermaid
+activityDiagram
+    start
+    :Dieter takes photo of meal;
+    :Dieter uploads photo to Cal AI App;
+    subgraph "Cal AI Software"
+        :AI analyze(photo);
+        :System retrieveActiveTarget(date);
+        :System calculateRemainingMacros();
+    end
+    :Dieter confirms analysis;
+    :System logMeal(macros, image);
+    :System updateDashboard();
+    stop
+```
+
+### 5. Business Domain Model
 
 ```
 +-------------------+       1    *  +-------------------+
@@ -88,7 +130,23 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 - Updating targets closes the previous period (sets `endDate`) and opens a new one.
 - Remaining = max(0, target - consumed). Never negative.
 
-### BR-5: Authentication & Authorization
+### BR-5: Target Period Lifecycle (State Management)
+To ensure historical data integrity, `TargetPeriod` follows a strict state transition to manage changes in user goals.
+
+```mermaid
+stateDiagram-v2
+    [*] --> INITIALIZING: Onboarding Started
+    INITIALIZING --> ACTIVE: User Approves (UC-7)
+    ACTIVE --> ARCHIVED: User Updates Plan (UC-13)
+    ARCHIVED --> [*]
+    
+    note right of ACTIVE
+        Only one period can be 
+        active per user at a time.
+    end note
+```
+
+### BR-6: Authentication & Authorization
 
 - JWT-based authentication. Tokens include user ID, email, role.
 - Two roles: `user` (default), `admin`.
