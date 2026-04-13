@@ -11,6 +11,17 @@ export class MealsService {
     private targetPeriodsService: TargetPeriodsService,
   ) { }
 
+  private async getProfileId(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { profile: true },
+    });
+    if (!user || !user.profile) {
+      throw new Error(`Profile not found for user ${userId}`);
+    }
+    return user.profile.id;
+  }
+
   /**
    * Calculate health score based on meal nutritional values
    * Simple algorithm: considers balance of macros and calorie density
@@ -46,13 +57,14 @@ export class MealsService {
   }
 
   async create(createMealDto: CreateMealDto, userId: string): Promise<Meal> {
+    const profileId = await this.getProfileId(userId);
     // Calculate health score if not provided
     const healthScore = this.calculateHealthScore(createMealDto);
 
     // Create meal with current date/time
     const meal = await this.prisma.meal.create({
       data: {
-        userId,
+        profileId,
         name: createMealDto.name,
         foodItems: createMealDto.foodItems,
         calories: createMealDto.calories,
@@ -61,13 +73,13 @@ export class MealsService {
         fats: createMealDto.fats,
         imageUrl: createMealDto.imageUrl,
         healthScore: healthScore,
-        date: createMealDto.date ? new Date(createMealDto.date) : new Date(), // Use provided date or default to today
+        date: createMealDto.date ? new Date(createMealDto.date) : new Date(), 
       },
     });
 
     return {
       id: meal.id,
-      userId: meal.userId,
+      userId,
       date: meal.date,
       name: meal.name,
       foodItems: meal.foodItems,
@@ -82,14 +94,15 @@ export class MealsService {
   }
 
   async findAll(userId: string): Promise<Meal[]> {
+    const profileId = await this.getProfileId(userId);
     const meals = await this.prisma.meal.findMany({
-      where: { userId },
+      where: { profileId },
       orderBy: { createdAt: 'desc' },
     });
 
     return meals.map((meal) => ({
       id: meal.id,
-      userId: meal.userId,
+      userId,
       date: meal.date,
       name: meal.name,
       foodItems: meal.foodItems,
@@ -104,19 +117,19 @@ export class MealsService {
   }
 
   async findByDate(userId: string, date: string): Promise<Meal[]> {
+    const profileId = await this.getProfileId(userId);
     // Parse date string (YYYY-MM-DD) and create date range in UTC
     const dateParts = date.split('-');
     const year = parseInt(dateParts[0], 10);
-    const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
+    const month = parseInt(dateParts[1], 10) - 1; 
     const day = parseInt(dateParts[2], 10);
 
-    // Create start and end of day in UTC to avoid timezone issues
     const startOfDay = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
     const endOfDay = new Date(Date.UTC(year, month, day, 23, 59, 59, 999));
 
     const meals = await this.prisma.meal.findMany({
       where: {
-        userId,
+        profileId,
         date: {
           gte: startOfDay,
           lte: endOfDay,
@@ -127,7 +140,7 @@ export class MealsService {
 
     return meals.map((meal) => ({
       id: meal.id,
-      userId: meal.userId,
+      userId,
       date: meal.date,
       name: meal.name,
       foodItems: meal.foodItems,
@@ -150,10 +163,10 @@ export class MealsService {
     const targetDate = date || new Date().toISOString().split('T')[0];
     const meals = await this.findByDate(userId, targetDate);
 
-    // Get targets for this specific date (range-based lookup)
+    // Get targets for this specific date
     const targets = await this.targetPeriodsService.getTargetsForDate(userId, targetDate);
 
-    // Calculate consumed totals (sum all meals for the day)
+    // Calculate consumed totals
     const consumed: MacroTargets = meals.reduce(
       (acc, meal) => ({
         calories: acc.calories + Number(meal.calories),
@@ -164,8 +177,6 @@ export class MealsService {
       { calories: 0, protein: 0, carbs: 0, fats: 0 },
     );
 
-    // Calculate remaining (targets - consumed, minimum 0)
-    // Uses the specific day's target for calculation
     const remaining: MacroTargets = {
       calories: Math.max(0, targets.calories - consumed.calories),
       protein: Math.max(0, targets.protein - consumed.protein),
@@ -183,62 +194,29 @@ export class MealsService {
   }
 
   async recalculateDailySummary(userId: string, date?: string): Promise<DailySummary> {
-    // Force recalculation by fetching fresh data
     return this.getDailySummary(userId, date);
   }
 
-  /**
-   * Get history of daily summaries for a date range
-   * Only returns dates that have actual data (meals or custom daily targets)
-   */
   async getHistory(userId: string, startDate: string, endDate: string): Promise<DailySummary[]> {
+    const profileId = await this.getProfileId(userId);
     const startParts = startDate.split('-');
     const endParts = endDate.split('-');
-    const start = new Date(
-      Date.UTC(
-        parseInt(startParts[0], 10),
-        parseInt(startParts[1], 10) - 1,
-        parseInt(startParts[2], 10),
-        0,
-        0,
-        0,
-        0,
-      ),
-    );
-    const end = new Date(
-      Date.UTC(
-        parseInt(endParts[0], 10),
-        parseInt(endParts[1], 10) - 1,
-        parseInt(endParts[2], 10),
-        23,
-        59,
-        59,
-        999,
-      ),
-    );
+    const start = new Date(Date.UTC(parseInt(startParts[0], 10), parseInt(startParts[1], 10) - 1, parseInt(startParts[2], 10), 0, 0, 0, 0));
+    const end = new Date(Date.UTC(parseInt(endParts[0], 10), parseInt(endParts[1], 10) - 1, parseInt(endParts[2], 10), 23, 59, 59, 999));
 
-    // Get user's creation date to avoid showing "ghost" targets for dates before they signed up
+    // Get user's creation date
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { createdAt: true },
     });
 
     const userCreatedDate = user?.createdAt || new Date();
-    // Normalize creation date to start of day UTC
-    const creationStart = new Date(Date.UTC(
-      userCreatedDate.getUTCFullYear(),
-      userCreatedDate.getUTCMonth(),
-      userCreatedDate.getUTCDate(),
-      0, 0, 0, 0
-    ));
-
-    // Cap the start date at the later of the requested start or the user's creation date
+    const creationStart = new Date(Date.UTC(userCreatedDate.getUTCFullYear(), userCreatedDate.getUTCMonth(), userCreatedDate.getUTCDate(), 0, 0, 0, 0));
     const finalStart = start > creationStart ? start : creationStart;
 
-    // Get all meals in date range
     const meals = await this.prisma.meal.findMany({
       where: {
-        userId,
+        profileId,
         date: {
           gte: finalStart,
           lte: end,
@@ -246,9 +224,6 @@ export class MealsService {
       },
       orderBy: { date: 'desc' },
     });
-
-    // Since we no longer use single-day targets, "activity" is purely defined by whether they ate a meal.
-    // There are no "custom target periods" for single days.
 
     // Group meals by date
     const mealsByDate = new Map<string, Meal[]>();
@@ -259,7 +234,7 @@ export class MealsService {
       }
       mealsByDate.get(dateKey)!.push({
         id: meal.id,
-        userId: meal.userId,
+        userId,
         date: meal.date,
         name: meal.name,
         foodItems: meal.foodItems,
@@ -274,10 +249,9 @@ export class MealsService {
     });
 
     // Get all unique dates from meals
-    const activityDates = new Set<string>();
-    meals.forEach(m => activityDates.add(m.date.toISOString().split('T')[0]));
+    const activityDates = Array.from(mealsByDate.keys());
 
-    // Generate summaries ONLY for dates that have actual activity/data
+    // Generate summaries
     const summaries: DailySummary[] = [];
     
     for (const dateKey of activityDates) {
@@ -301,7 +275,6 @@ export class MealsService {
         fats: Math.max(0, targets.fats - consumed.fats),
       };
 
-      // Add summary for this date
       summaries.push({
         date: dateKey,
         targets,
@@ -311,7 +284,6 @@ export class MealsService {
       });
     }
 
-    // Sort by date descending (most recent first)
     return summaries.sort((a, b) => b.date.localeCompare(a.date));
   }
 }

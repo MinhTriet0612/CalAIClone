@@ -19,25 +19,23 @@ export class AuthService {
       throw new UnauthorizedException('User with this email already exists');
     }
 
-    // Create user
+    // Create user with profile
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
     const user = await this.prisma.user.create({
       data: {
         email: registerDto.email,
         password: hashedPassword,
-        role: 'user',
+        profile: {
+          create: {}, // Initialize empty profile
+        },
       },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        profile: true,
       },
     });
 
     // Generate JWT token
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { sub: user.id, email: user.email };
     const accessToken = this.jwtService.sign(payload);
 
     return {
@@ -45,7 +43,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
+        profile: user.profile,
       },
     };
   }
@@ -66,7 +64,7 @@ export class AuthService {
     }
 
     // 3. Generate JWT token
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { sub: user.id, email: user.email };
     const accessToken = this.jwtService.sign(payload);
 
     return {
@@ -74,7 +72,7 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
-        role: user.role,
+        profile: user.profile,
       },
     };
   }
@@ -82,19 +80,8 @@ export class AuthService {
   async validateUserById(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        age: true,
-        gender: true,
-        height: true,
-        weight: true,
-        activityLevel: true,
-        goal: true,
-        targetWeight: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        profile: true,
       },
     });
     if (!user) {
@@ -107,6 +94,9 @@ export class AuthService {
   private async getUserByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
+      include: {
+        profile: true,
+      },
     });
   }
 }

@@ -14,18 +14,31 @@ model User {
   id       String @id @default(cuid())
   email    String @unique
   password String
-  role     String @default("user") // "user" | "admin"
 
-  // Profile
-  age                Int?
-  birthDate          DateTime?
-  gender             String? // "male" | "female" | "other"
-  height             Float? // cm
-  weight             Float? // kg
-  activityLevel      String? // "sedentary" | "light" | "moderate" | "active" | "very_active"
-  workoutsPerWeek    Int?
-  goal               String? // "weight_loss" | "muscle_gain" | "maintenance" | "cutting" | "health"
-  targetWeight       Float?
+  // Profile relation
+  profile   Profile?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Bio Metrics
+  age             Int?
+  birthDate       DateTime?
+  gender          String? // "male" | "female" | "other"
+  height          Float? // cm
+  weight          Float? // kg
+  activityLevel   String? // "sedentary" | "light" | "moderate" | "active" | "very_active"
+  workoutsPerWeek Int?
+  goal            String? // "weight_loss" | "muscle_gain" | "maintenance" | "cutting" | "health"
+  targetWeight    Float?
 
   // Relations
   meals         Meal[]
@@ -35,27 +48,27 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("users")
+  @@map("profiles")
 }
 
 model WeightLog {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   rawWeight   Float // Scale weight entered by user
   trendWeight Float // EMA smoothed weight
 
   createdAt DateTime @default(now())
 
-  @@index([userId, createdAt])
+  @@index([profileId, createdAt])
   @@map("weight_logs")
 }
 
 model TargetPeriod {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   startDate DateTime // Start of the period (normalized to UTC 00:00:00)
   endDate   DateTime? // End of the period (NULL means it's the currently active plan)
@@ -68,14 +81,14 @@ model TargetPeriod {
 
   createdAt DateTime @default(now())
 
-  @@index([userId, startDate, endDate])
+  @@index([profileId, startDate, endDate])
   @@map("target_periods")
 }
 
 model Meal {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   name        String
   foodItems   String[]
@@ -90,6 +103,6 @@ model Meal {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userId, date])
+  @@index([profileId, date])
   @@map("meals")
 }

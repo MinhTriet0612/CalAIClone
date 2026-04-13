@@ -10,10 +10,23 @@ export class WeightLogsService {
     private scientificService: ScientificService,
   ) {}
 
+  private async getProfileId(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { profile: true },
+    });
+    if (!user || !user.profile) {
+      throw new Error(`Profile not found for user ${userId}`);
+    }
+    return user.profile.id;
+  }
+
   async create(userId: string, dto: CreateWeightLogDto) {
+    const profileId = await this.getProfileId(userId);
+
     // 1. Get the most recent weight log to get the previous trend
     const lastLog = await this.prisma.weightLog.findFirst({
-      where: { userId },
+      where: { profileId },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -25,15 +38,15 @@ export class WeightLogsService {
     // 3. Save the log
     const log = await this.prisma.weightLog.create({
       data: {
-        userId,
+        profileId,
         rawWeight: dto.weight,
         trendWeight: newTrend,
       },
     });
 
-    // 4. Update the user's primary weight field (for legacy BMR calculations)
-    await this.prisma.user.update({
-      where: { id: userId },
+    // 4. Update the profile's primary weight field (for calculations)
+    await this.prisma.profile.update({
+      where: { id: profileId },
       data: { weight: dto.weight },
     });
 
@@ -41,15 +54,17 @@ export class WeightLogsService {
   }
 
   async getHistory(userId: string) {
+    const profileId = await this.getProfileId(userId);
     return this.prisma.weightLog.findMany({
-      where: { userId },
+      where: { profileId },
       orderBy: { createdAt: 'asc' },
     });
   }
 
   async getLatestTrend(userId: string) {
+    const profileId = await this.getProfileId(userId);
     const lastLog = await this.prisma.weightLog.findFirst({
-      where: { userId },
+      where: { profileId },
       orderBy: { createdAt: 'desc' },
     });
     return lastLog ? lastLog.trendWeight : null;

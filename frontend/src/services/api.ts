@@ -1,9 +1,31 @@
 import axios from 'axios';
 import type { MealAnalysis, DailySummary, MacroTargets, ChatMessage } from '../../../shared/types';
 
-export interface WeightLog {
+export interface UserProfile {
   id: string;
   userId: string;
+  age?: number;
+  birthDate?: string;
+  gender?: 'male' | 'female' | 'other';
+  height?: number;
+  weight?: number;
+  activityLevel?: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+  workoutsPerWeek?: number;
+  goal?: 'weight_loss' | 'muscle_gain' | 'maintenance' | 'cutting' | 'health';
+  targetWeight?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  profile: UserProfile | null;
+}
+
+export interface WeightLog {
+  id: string;
+  profileId: string;
   rawWeight: number;
   trendWeight: number;
   createdAt: string;
@@ -18,9 +40,8 @@ export interface CoachingAnalytics {
   adaptiveTDEE?: number;
   isPlateau?: boolean;
   trajectory?: { day: number; weight: number }[];
+  isDemo?: boolean;
 }
-
-// CreateMealDto interface for frontend
 interface CreateMealDto {
   name: string;
   foodItems: string[];
@@ -228,6 +249,12 @@ export const usersApi = {
   // Get current user info
   getCurrentUser: async () => {
     const response = await api.get('/users/me');
+    return response.data;
+  },
+
+  // Update user targets
+  updateTargets: async (targets: Partial<MacroTargets>) => {
+    const response = await api.put('/users/targets', targets);
     return response.data;
   },
 };

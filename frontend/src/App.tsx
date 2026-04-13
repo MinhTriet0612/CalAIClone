@@ -36,15 +36,14 @@ function AppContent() {
 
   const checkOnboardingStatus = async () => {
     try {
-      const userData = await usersApi.getCurrentUser();
-      // Check if user has default targets (means onboarding not completed)
-      const hasCustomTargets = userData.targetCalories !== 2000 || 
-                                userData.targetProtein !== 150 ||
-                                userData.targetCarbs !== 250 ||
-                                userData.targetFats !== 65;
-      setNeedsOnboarding(!hasCustomTargets);
+      const user = await usersApi.getCurrentUser();
+      const profile = user.profile;
       
-      if (hasCustomTargets) {
+      // Determine onboarding need based on profile completeness (e.g., if goal is set)
+      const hasCompletedOnboarding = !!(profile && profile.goal && profile.weight && profile.height);
+      setNeedsOnboarding(!hasCompletedOnboarding);
+      
+      if (hasCompletedOnboarding) {
         loadDailySummary();
         loadCoachingAnalytics();
       }
@@ -56,6 +55,15 @@ function AppContent() {
       setNeedsOnboarding(true); // Default to showing onboarding on error
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCoachingAnalytics = async () => {
+    try {
+      const data = await coachingApi.getAnalytics();
+      setCoachingAnalytics(data);
+    } catch (error) {
+      console.error('Error loading coaching analytics:', error);
     }
   };
 
@@ -201,6 +209,26 @@ function AppContent() {
     );
   }
 
+  const handleApplyAdjustment = async () => {
+    if (!coachingAnalytics?.adaptiveTDEE) return;
+    
+    try {
+      setLoading(true);
+      // Determine new target calories based on adaptive TDEE.
+      // Goal logic would usually be full recalculation, but simply updating calories here matches UC-15.
+      await usersApi.updateTargets({
+        calories: coachingAnalytics.adaptiveTDEE
+      });
+      alert(`Nutrition plan successfully updated to ${coachingAnalytics.adaptiveTDEE} kcal!`);
+      await loadDailySummary();
+    } catch (error) {
+      console.error('Error applying adjustment:', error);
+      alert('Failed to apply nutrition adjustment.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const dashboard = (
     <div className="dashboard">
       <MacroTargetsCard
@@ -216,29 +244,43 @@ function AppContent() {
 
       <div className="coaching-section">
         <div className="section-header">
-          <h3>Scientific Coaching Intelligence</h3>
+          <h3>
+            Scientific Coaching Intelligence
+            {coachingAnalytics?.isDemo && <span className="demo-badge">DEMO MODE</span>}
+          </h3>
           <button className="weight-log-btn" onClick={() => setShowWeightModal(true)}>
             Log Scale Weight
           </button>
         </div>
 
         {coachingAnalytics && coachingAnalytics.status === 'SUCCESS' ? (
-          <div className="analytics-grid">
-            <div className="analytic-card">
-              <span className="label">Adaptive TDEE</span>
-              <span className="value">{coachingAnalytics.adaptiveTDEE} kcal</span>
-              <span className="note">Real metabolic burn</span>
+          <div>
+            <div className="analytics-grid">
+              <div className="analytic-card">
+                <span className="label">Adaptive TDEE</span>
+                <span className="value">{coachingAnalytics.adaptiveTDEE} kcal</span>
+                <span className="note">Real metabolic burn</span>
+              </div>
+              <div className="analytic-card">
+                <span className="label">14d Trend</span>
+                <span className="value">{coachingAnalytics.weightChange14d} kg</span>
+                <span className="note">Noise-filtered</span>
+              </div>
+              {coachingAnalytics.isPlateau && (
+                <div className="analytic-card plateau-alert">
+                  <span className="label">Plateau Alert</span>
+                  <span className="value">Metabolic Shift</span>
+                  <span className="note">Adaptation detected</span>
+                </div>
+              )}
             </div>
-            <div className="analytic-card">
-              <span className="label">14d Trend</span>
-              <span className="value">{coachingAnalytics.weightChange14d} kg</span>
-              <span className="note">Noise-filtered</span>
-            </div>
-            {coachingAnalytics.isPlateau && (
-              <div className="analytic-card plateau-alert">
-                <span className="label">Plateau Alert</span>
-                <span className="value">Metabolic Shift</span>
-                <span className="note">Adaptation detected</span>
+            
+            {coachingAnalytics.adaptiveTDEE !== dailySummary.targets.calories && (
+              <div className="adjustment-action">
+                <p>Your body has adapted. We recommend updating your target baseline to match your real burn.</p>
+                <button className="apply-adjustment-btn" onClick={handleApplyAdjustment}>
+                  Apply {coachingAnalytics.adaptiveTDEE} kcal Target
+                </button>
               </div>
             )}
           </div>
@@ -256,7 +298,7 @@ function AppContent() {
       {showWeightModal && (
         <WeightLogModal 
           onClose={() => setShowWeightModal(false)} 
-          onSuccess={(newTrend) => {
+          onSuccess={() => {
             loadCoachingAnalytics();
             loadDailySummary();
           }}

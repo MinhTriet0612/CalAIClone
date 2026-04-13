@@ -7,21 +7,19 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async createUser(email: string, password: string, role: 'user' | 'admin' = 'user') {
+  async createUser(email: string, password: string) {
     const hashedPassword = await bcrypt.hash(password, 10);
     
     return this.prisma.user.create({
       data: {
         email,
         password: hashedPassword,
-        role,
+        profile: {
+          create: {},
+        },
       },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        profile: true,
       },
     });
   }
@@ -29,21 +27,8 @@ export class UsersService {
   async getUserById(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        age: true,
-        gender: true,
-        height: true,
-        weight: true,
-        birthDate: true,
-        workoutsPerWeek: true,
-        activityLevel: true,
-        goal: true,
-        targetWeight: true,
-        createdAt: true,
-        updatedAt: true,
+      include: {
+        profile: true,
       },
     });
   }
@@ -51,6 +36,9 @@ export class UsersService {
   async getUserByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
+      include: {
+        profile: true,
+      },
     });
   }
 
@@ -70,8 +58,8 @@ export class UsersService {
   }
 
   async updateUserProfile(userId: string, profile: Partial<UserProfile>): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
+    await this.prisma.profile.update({
+      where: { userId },
       data: {
         age: profile.age,
         gender: profile.gender,
@@ -87,17 +75,20 @@ export class UsersService {
   }
 
   async updateUserTargets(userId: string, targets: MacroTargets, goal?: string): Promise<void> {
+    const user = await this.getUserById(userId);
+    if (!user || !user.profile) return;
+
     const now = new Date();
     // End the current active period(s)
     await this.prisma.targetPeriod.updateMany({
-      where: { userId, endDate: null },
+      where: { profileId: user.profile.id, endDate: null },
       data: { endDate: now },
     });
 
     // Create new active period
     await this.prisma.targetPeriod.create({
       data: {
-        userId,
+        profileId: user.profile.id,
         startDate: now,
         endDate: null,
         calories: targets.calories,
@@ -109,16 +100,12 @@ export class UsersService {
     });
   }
 
-  async updateUserRole(userId: string, role: 'user' | 'admin'): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { role },
-    });
-  }
-
   async getUserTargets(userId: string): Promise<MacroTargets | null> {
+    const user = await this.getUserById(userId);
+    if (!user || !user.profile) return null;
+
     const period = await this.prisma.targetPeriod.findFirst({
-      where: { userId, endDate: null },
+      where: { profileId: user.profile.id, endDate: null },
       orderBy: { startDate: 'desc' },
     });
 

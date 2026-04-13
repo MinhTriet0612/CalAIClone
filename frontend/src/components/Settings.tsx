@@ -34,19 +34,14 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
     const loadProfile = async () => {
       try {
         setLoading(true);
-        const profile = await usersApi.getCurrentUser();
-        setCurrentTargets({
-          calories: profile.targetCalories,
-          protein: profile.targetProtein,
-          carbs: profile.targetCarbs,
-          fats: profile.targetFats,
-        });
+        const user = await usersApi.getCurrentUser();
+        const profile = user.profile;
         
-        // Sync formData with profile (UC-5 Persistence Fix)
-        if (profile.gender) {
+        if (profile) {
+          // Sync formData with profile
           setFormData(prev => ({
             ...prev,
-            gender: profile.gender,
+            gender: profile.gender ?? prev.gender,
             height: profile.height ?? prev.height,
             weight: profile.weight ?? prev.weight,
             workoutsPerWeek: profile.workoutsPerWeek ?? prev.workoutsPerWeek,
@@ -55,9 +50,10 @@ export function Settings({ onTargetsUpdated }: SettingsProps) {
             targetWeight: profile.targetWeight ?? prev.targetWeight,
           }));
         }
-      } catch (err: any) {
-        console.error('Failed to load profile', err);
-        setError(err.response?.data?.message || 'Unable to load user profile');
+
+        // Fetch current targets (which are separate from profile basics)
+        const targets = await usersApi.updateTargets({}); // Fetch existing targets by sending empty update
+        setCurrentTargets(targets);
       } finally {
         setLoading(false);
       }

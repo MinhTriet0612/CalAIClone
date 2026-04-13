@@ -10,14 +10,26 @@ export class ChatMealSummaryService {
     private readonly targetPeriodsService: TargetPeriodsService,
   ) { }
 
+  private async getProfileId(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { profile: true },
+    });
+    if (!user || !user.profile) {
+      throw new Error(`Profile not found for user ${userId}`);
+    }
+    return user.profile.id;
+  }
+
   private async findMealsByDate(userId: string, date: string): Promise<Meal[]> {
+    const profileId = await this.getProfileId(userId);
     const [year, month, day] = date.split('-').map((part) => parseInt(part, 10));
     const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
 
     const meals = await this.prisma.meal.findMany({
       where: {
-        userId,
+        profileId,
         date: {
           gte: startOfDay,
           lte: endOfDay,
@@ -28,7 +40,7 @@ export class ChatMealSummaryService {
 
     return meals.map((meal) => ({
       id: meal.id,
-      userId: meal.userId,
+      userId,
       date: meal.date,
       name: meal.name,
       foodItems: meal.foodItems,

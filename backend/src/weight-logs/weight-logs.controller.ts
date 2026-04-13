@@ -3,7 +3,7 @@ import { WeightLogsService } from './weight-logs.service';
 import { CreateWeightLogDto } from './dto/create-weight-log.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@Controller('weight-logs')
+@Controller('api/weight-logs')
 @UseGuards(JwtAuthGuard)
 export class WeightLogsController {
   constructor(private readonly weightLogsService: WeightLogsService) {}

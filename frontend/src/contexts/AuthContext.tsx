@@ -1,15 +1,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { setAuthToken } from '../services/api';
+import { setAuthToken, User } from '../services/api';
 import { authApi } from '../services/api';
 
 const TOKEN_KEY = 'jwt_token';
 const USER_KEY = 'user';
-
-interface User {
-  id: string;
-  email: string;
-  role: string;
-}
 
 interface AuthContextType {
   currentUser: User | null;

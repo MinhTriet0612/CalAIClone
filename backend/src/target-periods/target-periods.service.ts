@@ -6,17 +6,25 @@ import { MacroTargets } from '../shared/types';
 export class TargetPeriodsService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * Get targets for a specific date purely from historical TargetPeriod records.
-   * There is no 'auto creation' on missing read anymore, as it indicates a legacy data failure.
-   */
+  private async getProfileId(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { profile: true },
+    });
+    if (!user || !user.profile) {
+      throw new Error(`Profile not found for user ${userId}`);
+    }
+    return user.profile.id;
+  }
+
   async getTargetsForDate(userId: string, date: string): Promise<MacroTargets> {
+    const profileId = await this.getProfileId(userId);
     const dayStart = new Date(date + 'T00:00:00.000Z');
     const dayEnd = new Date(date + 'T23:59:59.999Z');
 
     const targetPeriod = await this.prisma.targetPeriod.findFirst({
       where: {
-        userId,
+        profileId,
         startDate: { lte: dayEnd },
         OR: [
           { endDate: { gte: dayStart } },
