@@ -49,38 +49,71 @@ Lược đồ dưới đây mô tả luồng giao tiếp dữ liệu khi Ngườ
 
 **b. Lược đồ thiết kế**
 
-```mermaid
-sequenceDiagram
-    %% Định dạng chuẩn BCE
-    actor User as Người dùng
-    participant UI as Boundary: TrendsUI
-    participant Logic as Control: WeightLogsController
-    participant DB as Entity: WeightLogRepository
+```plantuml
+@startuml
+autonumber
+skinparam style strictuml
 
-    %% Bắt đầu luồng
-    User->>UI: Bấm [Lưu mốc cân nặng]
-    UI->>Logic: createWeightLog(weightDto)
+actor "Người dùng" as Actor
+boundary "TrendsUI" as UI
+control "WeightLogsController" as Logic
+entity "WeightLog" as Entity
+
+Actor -> UI : Nhập cân nặng hiện tại
+UI -> Logic : createWeightLog(payload, date)
+
+alt Giá trị nhập liệu nằm ngoài khoảng biên
+    Logic --> UI : throw BadRequestException
+    UI --> Actor : Hiển thị lỗi Validation
+else Giá trị nhập liệu hợp lệ
+    Logic -> Entity : save(new WeightLog)
+    Entity --> Logic : return (WeightLog Entity Database)
     
-    %% Khối rẽ nhánh chính
-    alt Dữ liệu không hợp lệ (ngoài biên)
-        Logic-->>UI: throw BadRequestException
-        UI-->>User: Hiển thị Pop-up "Dữ liệu không hợp logic"
-    else Dữ liệu hợp lệ
-        %% Truy vấn dữ liệu
-        Logic->>DB: save(weightData)
-        DB-->>Logic: return savedEntity
-        
-        Note over Logic: [Tọa độ SQA - Test Hộp trắng]<br/>Luồng tính toán McCabe V(G)=2 tại đây
-        
-        %% Self-message thể hiện logic tính toán nội bộ
-        Logic->>Logic: emaArray = calculateEMA(logs)
-        
-        %% Kết thúc luồng hiển thị
-        Logic-->>UI: return arrayResponse
-        UI-->>User: Render Đồ thị Xu hướng Mới
-    end
+    note over Logic
+        [Điểm tính McCabe V(G)=2]
+        Hàm tính Đường trung bình động
+    end note
+    Logic -> Logic : calculateEMA(logs)
+    
+    Logic --> UI : return Mảng đồ thị
+    UI --> Actor : Cập nhật biểu đồ hiển thị
+end
+@enduml
 ```
 *Hình 4.1: Lược đồ Tuần tự luồng xử lý Làm mịn Xu hướng Cân nặng (EMA)*
+
+### 4. Lược đồ Lớp (Class Diagram)
+
+Lược đồ Lớp mô tả các thành phần cấu trúc tham gia vào hệ thống, hiển thị tính gắn kết chặt chẽ theo kiến trúc BCE. Đoạn mã dưới đây đặc tả các mối quan hệ Class của chức năng Theo dõi cân nặng.
+
+```plantuml
+@startuml
+skinparam style strictuml
+
+class TrendsUI <<Boundary>> {
+    + showWeightForm()
+    + renderChart(chartData: Array)
+    + showErrorMessage(error: String)
+}
+
+class WeightLogsController <<Control>> {
+    + createWeightLog(weightDto: Object): Response
+    - calculateEMA(logs: Array): Array
+}
+
+class WeightLog <<Entity>> {
+    + id: String [PK]
+    + profileId: String [FK]
+    + rawWeight: Float
+    + trendWeight: Float
+    + createdAt: DateTime
+}
+
+TrendsUI --> WeightLogsController : Gửi Request
+WeightLogsController ..> WeightLog : Quản lý
+@enduml
+```
+*Hình 4.2: Lược đồ Lớp mô tả cấu trúc Boundary - Control - Entity của UC-14.*
 
 **c. Diễn giải luồng dữ liệu & Điểm chốt Kiểm thử**
 * **Luồng dữ liệu (Data Flow):** Dữ liệu di chuyển một chiều từ giao diện (`View`) thông qua `Controller` xuống `Repository` để lưu trữ nhật ký. Sau khi lưu thành công, `Controller` đóng vai trò điều phối, tiếp tục gọi lệnh tính toán EMA tại `Service`. Cuối cùng, mảng tọa độ đồ thị (Array) được đóng gói và trả ngược về UI. Giao diện (View) hoàn toàn thụ động và không nhúng tay vào cấu trúc toán học.

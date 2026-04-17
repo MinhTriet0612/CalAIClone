@@ -48,40 +48,83 @@ Lược đồ diễn tả kiến trúc tương tác đa diện khi người dùn
 
 **b. Lược đồ thiết kế**
 
-```mermaid
-sequenceDiagram
-    %% Định dạng chuẩn BCE
-    actor User as Người dùng
-    participant UI as Boundary: ChatbotUI
-    participant Logic as Control: AiCoachingService
-    participant DB as Entity: GeminiCloudAPI
+```plantuml
+@startuml
+autonumber
+skinparam style strictuml
 
-    %% Bắt đầu luồng
-    User->>UI: Gõ và Bấm [Send Message]
-    UI->>Logic: generateMeatCoachAdvice(query)
+actor "Người dùng" as Actor
+boundary "ChatbotUI" as UI
+control "AiCoachingService" as Logic
+entity "Profile" as Entity
+
+Actor -> UI : Gửi chuỗi thao tác nhập liệu
+UI -> Logic : generateAdvice(query)
+
+Logic -> Entity : findUnique(userId)
+Entity --> Logic : return Profile Entity (Goal, Macros)
+
+Logic -> Logic : callExternalLLM(promptJSON)
+
+alt Lỗi mạng hoặc Timeout
+    Logic --> UI : return Error 504 Gateway Timeout
+    UI --> Actor : Hiển thị lỗi kết nối cục bộ
+else Khởi tạo mô hình thành công
+    Logic -> Logic : Tiếp nhận chuỗi dạng Raw String
     
-    %% Truy vấn dữ liệu
-    Logic->>DB: createChatCompletion(promptJSON)
+    note over Logic
+        [Điểm tính McCabe V(G)=1]
+        Vòng lặp Regex thay thế định dạng
+    end note
+    Logic -> Logic : stripMarkdown(rawText)
     
-    %% Khối rẽ nhánh chính
-    alt Quá thời gian (Connection Timeout)
-        DB-->>Logic: throw NetworkException
-        Logic-->>UI: return ServerError 500
-        UI-->>User: Hiển thị Pop-up "Lỗi đường truyền"
-    else Phản hồi thành công
-        DB-->>Logic: return markdownRawText
-        
-        Note over Logic: [Tọa độ SQA - Test Hộp trắng]<br/>Thanh tẩy Pipeline Regex McCabe V(G)=1 tại đây
-        
-        %% Self-message thể hiện logic tính toán nội bộ
-        Logic->>Logic: plainText = stripMarkdown(markdownRawText)
-        
-        %% Kết thúc luồng hiển thị
-        Logic-->>UI: return jsonCleanResponse
-        UI-->>User: Render Message Chat sạch sẽ
-    end
+    Logic --> UI : return Chuỗi văn bản hiển thị
+    UI --> Actor : Đẩy tin nhắn vào giao diện hội thoại
+end
+@enduml
 ```
 *Hình 4.3: Lược đồ Tuần tự luồng tương tác Trợ lý ảo AI Coaching*
+
+### 4. Lược đồ Lớp (Class Diagram)
+
+Lược đồ Lớp kiểm soát dịch vụ mạng và tiến trình lọc nội dung.
+
+```plantuml
+@startuml
+skinparam style strictuml
+
+class ChatbotUI <<Boundary>> {
+    + displayMessage(msg: String)
+    + hideLoadingIndicator()
+    + throwNetworkError()
+}
+
+class AiCoachingService <<Control>> {
+    + generateAdvice(query: String): String
+    - stripMarkdown(rawText: String): String
+}
+
+class Profile <<Entity>> {
+    + id: String [PK]
+    + userId: String [FK] [Unique]
+    + age: Int?
+    + birthDate: DateTime?
+    + gender: String?
+    + height: Float?
+    + weight: Float?
+    + activityLevel: String?
+    + workoutsPerWeek: Int?
+    + goal: String?
+    + targetWeight: Float?
+    + createdAt: DateTime
+    + updatedAt: DateTime
+}
+
+ChatbotUI --> AiCoachingService : Khởi tạo Request
+AiCoachingService ..> Profile : Xem xét tham số
+@enduml
+```
+*Hình 4.4: Lược đồ Lớp mô tả kết cấu của hệ sinh thái AI Coaching UC-16.*
 
 **c. Diễn giải luồng dữ liệu & Điểm chốt Kiểm thử**
 * **Luồng dữ liệu (Data Flow):** Luồng điều khiển bắt đầu từ `View`, chảy qua `Controller` và được `Service` biên dịch lại trước khi xuất ngoại (Call External API). Khi Gemini Cloud API trả chuỗi (Raw Markdown), ống dẫn dữ liệu quay về `Service` để được thanh lọc nội dung (stripMarkdown) trước khi đóng gói HTTP 200 gửi về màn hình hội thoại. Cơ chế nguyên lý **SoC (Separation of Concerns)** được tuân thủ nghiêm ngặt, bóc tách triệt để luồng mạng lưới HTTP và luồng xử lý Chuỗi cục bộ.

@@ -48,38 +48,77 @@ Lược đồ dưới đây thể hiện tiến trình định kỳ tự động
 
 **b. Lược đồ thiết kế**
 
-```mermaid
-sequenceDiagram
-    %% Định dạng chuẩn BCE
-    actor User as Hệ thống Timer
-    participant UI as Boundary: BackgroundWorker
-    participant Logic as Control: ScientificService
-    participant DB as Entity: NutritionRepository
+```plantuml
+@startuml
+autonumber
+skinparam style strictuml
 
-    %% Bắt đầu luồng
-    User->>UI: Kích hoạt [Cronjob Phân tích Chu kỳ]
-    UI->>Logic: autoAdjustTDEE(userId)
+actor "Tiến trình Lịch trình" as Actor
+boundary "BackgroundWorker" as UI
+control "ScientificService" as Logic
+entity "TargetPeriod" as Entity
+
+Actor -> UI : Kích hoạt sự kiện quét định kỳ
+UI -> Logic : autoAdjustTDEE(userId)
+
+Logic -> Entity : findMany(userId, range)
+Entity --> Logic : return TargetPeriod[] Entities
+
+alt Độ dài mảng dữ liệu < 2
+    Logic --> UI : throw UnprocessableEntityException
+    UI --> Actor : Ngắt tiến trình xử lý
+else Có đủ dữ liệu tính toán
+    note over Logic
+        [Điểm tính McCabe V(G)=2]
+        Khối lệnh ngăn lỗi chia cho Không (Zero Division)
+    end note
+    Logic -> Logic : calculateAdaptiveTDEE(logs)
     
-    %% Truy vấn dữ liệu
-    Logic->>DB: fetchCycle(userId, 14)
-    DB-->>Logic: return weightLogsArray
-
-    %% Khối rẽ nhánh chính
-    alt Khuyết dữ liệu (logs.length < 2)
-        Logic-->>UI: throw UnprocessableEntityException
-        UI-->>User: Ngắt luồng Cronjob
-    else Dữ liệu hợp lệ (logs.length >= 2)
-        Note over Logic: [Tọa độ SQA - Test Hộp trắng]<br/>Bảo vệ ZeroDivision McCabe V(G)=2 tại đây
-        
-        %% Self-message thể hiện logic tính toán nội bộ
-        Logic->>Logic: newTdee = calculateAdaptiveTDEE(logs)
-        
-        %% Kết thúc luồng hiển thị
-        Logic-->>UI: return adaptiveResult
-        UI-->>User: Cập nhật Hệ số mới vào Cache
-    end
+    Logic -> Entity : create(new TargetPeriod)
+    
+    Logic --> UI : return Định lượng TDEE Output
+    UI --> Actor : Ghi đè chỉ số cấu hình mới
+end
+@enduml
 ```
 *Hình 4.2: Lược đồ Tuần tự luồng xử lý Tự động Điều chỉnh TDEE*
+
+### 4. Lược đồ Lớp (Class Diagram)
+
+Thể hiện sự phân tách nhiệm vụ rành mạch trong hệ thống Tự động hiệu chỉnh.
+
+```plantuml
+@startuml
+skinparam style strictuml
+
+class BackgroundWorker <<Boundary>> {
+    + triggerCronjob()
+    + triggerUpdateTask()
+}
+
+class ScientificService <<Control>> {
+    + autoAdjustTDEE(userId: String): Integer
+    - calculateAdaptiveTDEE(logs: Array): Integer
+}
+
+class TargetPeriod <<Entity>> {
+    + id: String [PK]
+    + profileId: String [FK]
+    + startDate: DateTime
+    + endDate: DateTime?
+    + calories: Int
+    + protein: Float
+    + carbs: Float
+    + fats: Float
+    + goal: String?
+    + createdAt: DateTime
+}
+
+BackgroundWorker --> ScientificService : Kích hoạt bộ máy phân tích
+ScientificService ..> TargetPeriod : Thao tác dữ liệu
+@enduml
+```
+*Hình 4.3: Lược đồ Lớp mô tả cấu trúc Boundary - Control - Entity của UC-15.*
 
 **c. Diễn giải luồng dữ liệu & Điểm chốt Kiểm thử**
 * **Luồng dữ liệu (Data Flow):** Request bắt nguồn từ sự kiện (Timer/Worker) gọi vào `Controller`. Tại đây `Controller` làm lệnh truyền thẳng xuống `Repository` để thu thập 14 bản ghi cân nặng gần nhất. Nếu hợp lệ, mảng dữ liệu này được chuyển giao cho `Service` đóng vai "nhà khoa học" phân tích và kết xuất định mức TDEE mới.

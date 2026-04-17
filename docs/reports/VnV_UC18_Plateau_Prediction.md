@@ -48,44 +48,83 @@ Lược đồ tập trung làm rõ chức năng Phân tích trạng thái rớt 
 
 **b. Lược đồ thiết kế**
 
-```mermaid
-sequenceDiagram
-    %% Định dạng chuẩn BCE
-    actor User as Người dùng
-    participant UI as Boundary: MealUI
-    participant Logic as Control: ScientificService
-    participant DB as Entity: MealIntakeHistory
+```plantuml
+@startuml
+autonumber
+skinparam style strictuml
 
-    %% Bắt đầu luồng
-    User->>UI: Bấm [Xác nhận bữa ăn]
-    UI->>Logic: checkPlateauCondition(userId)
+actor "Người dùng" as Actor
+boundary "MealUI" as UI
+control "ScientificService" as Logic
+entity "Meal" as Entity
+
+Actor -> UI : Cung cấp dữ liệu lưu bữa ăn
+UI -> Logic : checkPlateauCondition(userId)
+
+Logic -> Entity : findMany({ where: today })
+Entity --> Logic : return Array<Meal Entity>
+
+alt Giá trị Mảng tiêu thụ trống (Length = 0)
+    Logic --> UI : throw DataNotFoundException
+    UI --> Actor : Hiển thị lỗi thiếu mốc dữ liệu
+else Dữ liệu đáp ứng đủ định mức quy định
+    note over Logic
+        [Điểm tính McCabe V(G)=3]
+        Hàm tính toán ranh giới biến động Thâm hụt
+    end note
+    Logic -> Logic : calculateDeficit(tdee, intake)
     
-    %% Truy vấn dữ liệu
-    Logic->>DB: queryTodayIntake(userId)
-    DB-->>Logic: return intakeData
-
-    %% Khối rẽ nhánh chính
-    alt Khuyết dữ liệu (intake == 0)
-        Logic-->>UI: throw DataNotFoundException
-        UI-->>User: Hiển thị Pop-up "Khai báo thiếu"
-    else Dữ liệu hợp lệ (intake > 0)
-        Note over Logic: [Tọa độ SQA - Test Hộp trắng]<br/>Tính toán McCabe V(G)=3 tại đây
-        
-        %% Self-message thể hiện logic tính toán nội bộ
-        Logic->>Logic: deficit = calculateDeficit(TDEE, intake)
-        
-        %% Nhánh logic con
-        alt deficit > Threshold
-            Logic-->>UI: return isPlateau = false
-        else deficit <= Threshold
-            Logic-->>UI: return isPlateau = true
-        end
-        
-        %% Kết thúc luồng hiển thị
-        UI-->>User: Render Icon Trạng thái cơ thể
+    alt Biên độ Thâm hụt Lớn hơn Ngưỡng điều kiện (Deficit > Threshold)
+        Logic --> UI : return Boolean Value (False)
+    else Tỷ lệ Thâm hụt Dưới mức cảnh giới
+        Logic --> UI : return Boolean Value (True)
     end
+    
+    UI --> Actor : Hiển thị cờ cảnh báo rớt chững cân
+end
+@enduml
 ```
 *Hình 4.4: Lược đồ Tuần tự luồng phân tích Dự báo Chững cân*
+
+### 4. Lược đồ Lớp (Class Diagram)
+
+Lược đồ quy định quyền giao tiếp giữa các tầng cho chức năng Giám sát chững cân thời gian thực.
+
+```plantuml
+@startuml
+skinparam style strictuml
+
+class MealUI <<Boundary>> {
+    + submitMeal()
+    + showPlateauWarningIndicator()
+}
+
+class ScientificService <<Control>> {
+    + checkPlateauCondition(userId: String): Boolean
+    - calculateDeficit(tdee: Int, intake: Int): Int
+}
+
+class Meal <<Entity>> {
+    + id: String [PK]
+    + profileId: String [FK]
+    + name: String
+    + foodItems: String[]
+    + calories: Float
+    + protein: Float
+    + carbs: Float
+    + fats: Float
+    + imageUrl: String?
+    + healthScore: Int?
+    + date: DateTime
+    + createdAt: DateTime
+    + updatedAt: DateTime
+}
+
+MealUI --> ScientificService : Yêu cầu hàm xử lý cảnh báo
+ScientificService ..> Meal : Rút trích khối lượng Calo
+@enduml
+```
+*Hình 4.5: Lược đồ Lớp mô tả kiến trúc phân tử hệ thống UC-18.*
 
 **c. Diễn giải luồng dữ liệu & Điểm chốt Kiểm thử**
 * **Luồng dữ liệu (Data Flow):** Tương tự MVC chuẩn, giao diện `View` gửi Data thô tới `Controller`. `Controller` móc nối với tầng `Repository` kéo toàn bộ dữ liệu IntakeData hôm đó lên. Thay vì để `Controller` phải cực nhọc làm phép toán, hệ thống ủy quyền hoàn toàn cho `Service` nhận Parameter chức năng, tự định đoạt và đưa ra kết quả nhị phân Boolean. Các lớp làm đúng chức trách, không làm thay nhiệm vụ lớp khác.
