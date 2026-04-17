@@ -12,7 +12,7 @@ Lược đồ lớp (Class Diagram) là một lược đồ cấu trúc tĩnh tr
 
 Mỗi lớp thực thể bắt buộc phải hiển thị đủ 3 ngăn:
 
-1. **Tên lớp**: Tên của thực thể (V/d: `Người ăn kiêng`, `Bữa ăn`).
+1. **Tên lớp**: Tên của thực thể (V/d: `Người dùng`, `Bữa ăn`).
 2. **Ngăn thuộc tính**: Liệt kê các biến kèm kiểu dữ liệu (V/d: `- calories: Integer`). Đây là phần quan trọng nhất của một Thực thể.
 3. **Ngăn phương thức**: Liệt kê các hàm thao tác trên chính dữ liệu đó (V/d: `+ calculateBMR()`).
 

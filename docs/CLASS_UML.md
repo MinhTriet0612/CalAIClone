@@ -540,7 +540,7 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant D as Dieter
+    participant D as Người dùng
     participant Frontend
     participant MealsController
     participant AiService

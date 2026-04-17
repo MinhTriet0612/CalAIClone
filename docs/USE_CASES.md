@@ -5,7 +5,7 @@
 ```mermaid
 graph TB
     subgraph Actors
-        D((Dieter))
+        D((Người dùng))
         SA((System Administrator))
         AI((AI Nutrition Consultant))
         IMG((Image Host))
@@ -55,17 +55,17 @@ graph TB
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter (new) |
-| **Precondition** | Dieter is authenticated; targets are defaults |
+| **Actor** | Người dùng (new) |
+| **Precondition** | Người dùng is authenticated; targets are defaults |
 | **Trigger** | App detects un-onboarded status on login |
-| **Main Flow** | 1. Step 1: Select gender (male/female/other)<br>2. Step 2: Enter height (cm)<br>3. Step 3: Enter weight (kg)<br>4. Step 4: Enter birth date + workouts per week<br>5. Step 5: Select goal (weight_loss/muscle_gain/maintenance)<br>6. Step 5 (cont.): Enter target weight (if weight_loss or muscle_gain)<br>7. System calculates recommendations + projected date<br>8. Step 6: Dieter reviews recommended goals, projected reach date, and approves |
-| **Postcondition** | Dieter Profile entry in DB populated; Active TargetPeriod created |
-| **Exception** | E1: Dieter exits before Step 6 -> No changes persisted. |
+| **Main Flow** | 1. Step 1: Select gender (male/female/other)<br>2. Step 2: Enter height (cm)<br>3. Step 3: Enter weight (kg)<br>4. Step 4: Enter birth date + workouts per week<br>5. Step 5: Select goal (weight_loss/muscle_gain/maintenance)<br>6. Step 5 (cont.): Enter target weight (if weight_loss or muscle_gain)<br>7. System calculates recommendations + projected date<br>8. Step 6: Người dùng reviews recommended goals, projected reach date, and approves |
+| **Postcondition** | Người dùng Profile entry in DB populated; Active TargetPeriod created |
+| **Exception** | E1: Người dùng exits before Step 6 -> No changes persisted. |
 
 #### Sequence Diagram (UC-5)
 ```mermaid
 sequenceDiagram
-    participant D as Dieter
+    participant D as Người dùng
     participant S as Cal AI Software
     participant DB as Database
 
@@ -121,16 +121,16 @@ sequenceDiagram
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter |
-| **Precondition** | Dieter has reviewed meal analysis (UC-8) |
-| **Trigger** | Dieter clicks "Confirm" in MealAnalysisModal |
+| **Actor** | Người dùng |
+| **Precondition** | Người dùng has reviewed meal analysis (UC-8) |
+| **Trigger** | Người dùng clicks "Confirm" in MealAnalysisModal |
 | **Main Flow** | 1. Frontend sends meal data (name, foodItems, macros, imageUrl)<br>2. Backend calculates health score (use provided or compute from macro ratios)<br>3. Backend creates Meal record with current date/time<br>4. Backend recalculates daily summary<br>5. Returns updated DailySummary |
 | **Postcondition** | Meal saved; dashboard updated with new consumed/remaining values |
 
 #### Sequence Diagram (UC-9)
 ```mermaid
 sequenceDiagram
-    participant D as Dieter
+    participant D as Người dùng
     participant S as Cal AI Software
     participant AI as AI Nutrition Consultant
     participant DB as Database
@@ -152,8 +152,8 @@ sequenceDiagram
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter |
-| **Trigger** | Dashboard loads or Dieter selects a date |
+| **Actor** | Người dùng |
+| **Trigger** | Dashboard loads or Người dùng selects a date |
 | **Main Flow** | 1. Frontend requests GET /api/meals/daily-summary?date=YYYY-MM-DD<br>2. Backend fetches meals for the date<br>3. Backend fetches the latest TargetPeriod starting at or before the date<br>4. Backend calculates consumed (sum of meals) and remaining (target - consumed, min 0)<br>5. Returns { date, targets, consumed, remaining, meals } |
 | **Postcondition** | Dashboard shows macro progress bars and meal list |
 
@@ -163,10 +163,10 @@ sequenceDiagram
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter |
-| **Trigger** | Dieter opens History tab |
+| **Actor** | Người dùng |
+| **Trigger** | Người dùng opens History tab |
 | **Main Flow** | 1. Frontend sends date range (startDate, endDate)<br>2. Backend fetches all meals and daily targets in range<br>3. Backend groups meals by date, calculates per-day summaries<br>4. Returns array of DailySummary sorted by date desc<br>5. Frontend renders history list + analytics charts (BarChart) |
-| **Postcondition** | Dieter sees historical nutrition data |
+| **Postcondition** | Người dùng sees historical nutrition data |
 
 ---
 
@@ -176,15 +176,15 @@ sequenceDiagram
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter, Scientific Engine |
-| **Trigger** | Dieter enters current scale weight |
-| **Main Flow** | 1. Dieter enters raw weight (kg)<br>2. System retrieves latest $W_{trend, t-1}$<br>3. System applies EMA formula ($W_{trend, t} = \alpha \cdot W_{actual} + (1 - \alpha) \cdot W_{trend, t-1}$)<br>4. System stores both raw and trend weight<br>5. Dashboard updates with "Trend Weight" visualization |
+| **Actor** | Người dùng, Scientific Engine |
+| **Trigger** | Người dùng enters current scale weight |
+| **Main Flow** | 1. Người dùng enters raw weight (kg)<br>2. System retrieves latest $W_{trend, t-1}$<br>3. System applies EMA formula ($W_{trend, t} = \alpha \cdot W_{actual} + (1 - \alpha) \cdot W_{trend, t-1}$)<br>4. System stores both raw and trend weight<br>5. Dashboard updates with "Trend Weight" visualization |
 | **Postcondition** | Weight history updated; noise filtered for coaching logic |
 
 #### Sequence Diagram (UC-14)
 ```mermaid
 sequenceDiagram
-    participant D as Dieter
+    participant D as Người dùng
     participant S as Cal AI Software
     participant SE as Scientific Engine
     participant DB as Database
@@ -203,15 +203,15 @@ sequenceDiagram
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter, Scientific Engine |
+| **Actor** | Người dùng, Scientific Engine |
 | **Trigger** | Weekly Check-in (or 14-day data threshold reached) |
-| **Main Flow** | 1. System fetches `Avg(Calories_In)` and $\Delta W_{trend}$ for the last 14 days<br>2. System calculates $TDEE_{real}$ via Reverse Induction formula<br>3. System compares $TDEE_{real}$ with current target<br>4. If deviation > 5%, System proposes `NewTarget = TDEE_{real} + GoalOffset`<br>5. Dieter reviews and clicks "Apply Adjustment" |
+| **Main Flow** | 1. System fetches `Avg(Calories_In)` and $\Delta W_{trend}$ for the last 14 days<br>2. System calculates $TDEE_{real}$ via Reverse Induction formula<br>3. System compares $TDEE_{real}$ with current target<br>4. If deviation > 5%, System proposes `NewTarget = TDEE_{real} + GoalOffset`<br>5. Người dùng reviews and clicks "Apply Adjustment" |
 | **Postcondition** | TargetPeriod updated with scientifically verified macros |
 
 #### Sequence Diagram (UC-15)
 ```mermaid
 sequenceDiagram
-    participant D as Dieter
+    participant D as Người dùng
     participant S as Cal AI Software
     participant SE as Scientific Engine
     participant DB as Database
@@ -232,10 +232,10 @@ sequenceDiagram
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter, Scientific Engine |
+| **Actor** | Người dùng, Scientific Engine |
 | **Trigger** | TDEE calculation reveals significant metabolic slowdown |
-| **Main Flow** | 1. System calculates adaptation ratio $R = TDEE_{real} / TDEE_{initial}$<br>2. If $R < 0.9$, System flags potential plateau<br>3. Dieter receives "Metabolic Alert" notification<br>4. System provides advice (Diet Break or Activity Boost) |
-| **Postcondition** | Dieter informed of biological adaptation before weight stalls |
+| **Main Flow** | 1. System calculates adaptation ratio $R = TDEE_{real} / TDEE_{initial}$<br>2. If $R < 0.9$, System flags potential plateau<br>3. Người dùng receives "Metabolic Alert" notification<br>4. System provides advice (Diet Break or Activity Boost) |
+| **Postcondition** | Người dùng informed of biological adaptation before weight stalls |
 
 ---
 
@@ -247,8 +247,8 @@ sequenceDiagram
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter |
-| **Main Flow** | 1. Dieter adjusts Goal or Target Weight in Settings<br>2. System recalculates macros and projections<br>3. Dieter clicks "Approve"<br>4. System saves profile metrics and initializes new TargetPeriod |
+| **Actor** | Người dùng |
+| **Main Flow** | 1. Người dùng adjusts Goal or Target Weight in Settings<br>2. System recalculates macros and projections<br>3. Người dùng clicks "Approve"<br>4. System saves profile metrics and initializes new TargetPeriod |
 | **Postcondition** | New tracking phase started; dashboard updated |
 
 ---
@@ -257,16 +257,16 @@ sequenceDiagram
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter, AI Nutrition Consultant |
-| **Trigger** | Dieter navigates to Meal Chat and sends a message |
-| **Main Flow** | 1. Frontend sends prompt + conversation history<br>2. Backend loads Dieter's current daily summary (UC-10)<br>3. Backend builds prompt with: guardrails, client stats, history, user message<br>4. AI generates coaching response (<= 180 words, plain text)<br>5. Backend strips any markdown from response<br>6. Returns { reply } |
+| **Actor** | Người dùng, AI Nutrition Consultant |
+| **Trigger** | Người dùng navigates to Meal Chat and sends a message |
+| **Main Flow** | 1. Frontend sends prompt + conversation history<br>2. Backend loads Người dùng's current daily summary (UC-10)<br>3. Backend builds prompt with: guardrails, client stats, history, user message<br>4. AI generates coaching response (<= 180 words, plain text)<br>5. Backend strips any markdown from response<br>6. Returns { reply } |
 | **Postcondition** | Chat message displayed in UI; summary session context updated |
-| **Exception** | E1: Dieter asks for medical/pharmaceutical advice -> System triggers "Medical Disclaimer" guardrail response<br>E2: AI safety filter trigger -> Generic "I cannot answer this" response |
+| **Exception** | E1: Người dùng asks for medical/pharmaceutical advice -> System triggers "Medical Disclaimer" guardrail response<br>E2: AI safety filter trigger -> Generic "I cannot answer this" response |
 
 #### Sequence Diagram (UC-16)
 ```mermaid
 sequenceDiagram
-    participant D as Dieter
+    participant D as Người dùng
     participant S as Cal AI Software
     participant AI as AI Nutrition Consultant
 
@@ -283,14 +283,14 @@ sequenceDiagram
 
 | Field | Value |
 |-------|-------|
-| **Actor** | Dieter |
-| **Main Flow** | 1. Dieter updates metrics in Settings<br>2. Dieter clicks "Generate Recommendation"<br>3. System triggers calculation logic<br>4. Dieter approves and updates global defaults |
+| **Actor** | Người dùng |
+| **Main Flow** | 1. Người dùng updates metrics in Settings<br>2. Người dùng clicks "Generate Recommendation"<br>3. System triggers calculation logic<br>4. Người dùng approves and updates global defaults |
 | **Postcondition** | Targets updated; dashboard reflects new values |
 
 #### Sequence Diagram (UC-17)
 ```mermaid
 sequenceDiagram
-    participant D as Dieter
+    participant D as Người dùng
     participant S as Cal AI Software
     participant DB as Database
 
@@ -309,7 +309,7 @@ sequenceDiagram
 
 ## 3. Actor-Use Case Matrix
 
-| Use Case | Dieter | System Admin | AI Nutrition Consultant | Image Host | Scientific Engine |
+| Use Case | Người dùng | System Admin | AI Nutrition Consultant | Image Host | Scientific Engine |
 |----------|:----:|:-----:|:---------:|:----------:|:----------:|
 | UC-5 Establish Plan | X | | | | |
 | UC-8 Analyze Photo | X | | X | X | |

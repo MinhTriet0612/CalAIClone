@@ -10,7 +10,7 @@ Cal AI is an AI-powered calorie and macronutrient tracking application. Users ph
 
 | Stakeholder | Role | Interest |
 |---|---|---|
-| Dieter | Primary consumer | Track calories, reach fitness/health goals |
+| Người dùng | Primary consumer | Track calories, reach fitness/health goals |
 | System Administrator | System operator | Manage users, oversee platform |
 | AI Provider (Google Gemini) | External service | Provides meal image analysis and chat coaching |
 | Image Host (freeimage.host) | External service | Stores uploaded meal photos |
@@ -64,10 +64,10 @@ The legacy manual process lacks noise filtering and scientific adjustment.
 ```mermaid
 activityDiagram
     start
-    :Dieter records weight and food manually:;
+    :Người dùng records weight and food manually:;
     :Calculate deficit via static formula:;
     if (Weight doesn't drop?) then (Yes)
-        :Dieter gets confused/disheartened;
+        :Người dùng gets confused/disheartened;
         :Manual guess on calorie reduction;
     else (No)
         :Continue static routine;
@@ -82,7 +82,7 @@ The proposed solution implements a feedback loop to automate scientific adjustme
 ```mermaid
 activityDiagram
     start
-    :Dieter logs weight and food photos:;
+    :Người dùng logs weight and food photos:;
     :AI Engine calculates daily macros:;
     :Scientific Engine filters weight noise (EMA):;
     if (14-day data window complete?) then (Yes)
@@ -96,7 +96,7 @@ activityDiagram
     else (No)
         :Maintain latest target;
     endif
-    :Update Dieter Dashboard;
+    :Update Người dùng Dashboard;
     stop
 ```
 
