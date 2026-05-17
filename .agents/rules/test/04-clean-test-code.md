@@ -60,3 +60,49 @@ expect(items).toHaveLength(2);         // Log: Expected length 2, received 0
 - **DRY** (Don't Repeat Yourself) rất tốt cho production code.
 - Nhưng trong test code, hãy ưu tiên **DAMP** (Descriptive And Meaningful Phrases). 
 - **Rule:** Chấp nhận lặp lại một chút code setup (Arrange) nếu việc tách nó ra file helper làm bài test trở nên khó đọc, buộc người đọc phải nhảy qua lại giữa nhiều file để hiểu test đó đang chuẩn bị dữ liệu gì.
+
+### 6. Test Data Factory (Làm sạch phần Arrange)
+Khi cần tạo một Object phức tạp (như User, Meal, Profile) để test, KHÔNG khai báo toàn bộ object thủ công trong từng test case vì sẽ làm file test rất dài và khó nhìn.
+
+**✅ Phải tạo Factory function:**
+```typescript
+// Định nghĩa 1 lần
+const createMockMeal = (overrides?: Partial<Meal>): Meal => ({
+  id: '1',
+  name: 'Default Meal',
+  calories: 500,
+  ...overrides,
+});
+
+// Trong test: chỉ ghi đè field nào cần thiết cho test case này
+it('...', () => {
+  const meal = createMockMeal({ calories: 1200 }); // Sạch, gọn, biết ngay test này focus vào calories
+});
+```
+
+### 7. Mocking Type-Safe (BẮT BUỘC)
+**Cấm tuyệt đối** việc dùng `as any` khi mock các dependency (như PrismaService) vì nó làm mất hoàn toàn type-safety của TypeScript. Nếu code gốc đổi tên hàm, TypeScript sẽ không báo lỗi ở test.
+
+**✅ Dùng `jest-mock-extended` cho Prisma:**
+```typescript
+import { mockDeep, DeepMockProxy } from 'jest-mock-extended';
+import { PrismaClient } from '@prisma/client';
+
+let prismaMock: DeepMockProxy<PrismaClient>;
+
+beforeEach(() => {
+  prismaMock = mockDeep<PrismaClient>();
+  service = new MealsService(prismaMock);
+});
+
+it('...', async () => {
+  // Gợi ý code (autocomplete) hoạt động hoàn hảo và type-safe
+  prismaMock.meal.findUnique.mockResolvedValue(mockMeal); 
+});
+```
+
+**✅ Hoặc ép kiểu an toàn với hàm thông thường:**
+```typescript
+// Thay vì: (myService.fetchData as any).mockReturnValue(...)
+(myService.fetchData as jest.MockedFunction<typeof myService.fetchData>).mockReturnValue(...);
+```
