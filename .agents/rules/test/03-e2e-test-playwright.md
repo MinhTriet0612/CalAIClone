@@ -106,3 +106,18 @@ await page.waitForResponse('**/api/weight-logs'); // có thể miss
 | `waitForTimeout(5000)` | `waitForResponse('**/api/...')` |
 | `sleep(2000)` | `waitForURL('/target-path')` |
 | `waitForSelector('.class')` | `expect(page.getByRole('button')).toBeEnabled()` |
+
+### 5. Prefer UI-first assertion
+E2E là test user behavior, không phải network layer. Việc chờ network (`waitForResponse`) chỉ là **kỹ thuật đồng bộ hóa (synchronization)**, không phải là mục tiêu assertion chính.
+
+**❌ Bad (Overfit vào network):**
+```typescript
+const res = await responsePromise;
+expect(res.status()).toBe(200); // User không quan tâm status code
+```
+
+**✅ Good (Test behavior):**
+```typescript
+await responsePromise; // Chỉ để đồng bộ, chống flaky
+await expect(page.getByTestId('success-toast')).toBeVisible(); // Đây mới là thứ user thấy
+```
