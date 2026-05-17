@@ -50,16 +50,19 @@ Lược đồ tập trung làm rõ chức năng Phân tích trạng thái rớt 
 
 ```plantuml
 @startuml
+title UC-18: Dự báo Điểm chững cân (Plateau Prediction)
 autonumber
 skinparam style strictuml
 
 actor "Người dùng" as Actor
 boundary "MealUI" as UI
+boundary "MealsController" as API
 control "ScientificService" as Logic
 entity "Meal" as Entity
 
 Actor -> UI : Cung cấp dữ liệu lưu bữa ăn
-UI -> Logic : checkPlateauCondition(userId)
+UI -> API : POST /api/meals
+API -> Logic : checkPlateauCondition(userId)
 
 Logic -> Entity : findMany({ where: today })
 Entity --> Logic : return Array<Meal Entity>
@@ -77,10 +80,9 @@ else Dữ liệu đáp ứng đủ định mức quy định
     alt Biên độ Thâm hụt Lớn hơn Ngưỡng điều kiện (Deficit > Threshold)
         Logic --> UI : return Boolean Value (False)
     else Tỷ lệ Thâm hụt Dưới mức cảnh giới
-        Logic --> UI : return Boolean Value (True)
-    end
-    
-    UI --> Actor : Hiển thị cờ cảnh báo rớt chững cân
+        Logic --> API : return Tín hiệu rủi ro cao (High Plateau Risk)
+    API --> UI : 200 OK (With Alert)
+    UI --> Actor : Cảnh báo và đề xuất thay đổi Macro
 end
 @enduml
 ```
@@ -92,16 +94,21 @@ Lược đồ quy định quyền giao tiếp giữa các tầng cho chức năn
 
 ```plantuml
 @startuml
+title Lược đồ Lớp: Hệ thống Cảnh báo Rủi ro Chững cân (UC-18)
 skinparam style strictuml
 
 class MealUI <<Boundary>> {
-    + submitMeal()
-    + showPlateauWarningIndicator()
+    + trackNewMeal(): void
+    + displayPlateauAlert(): void
+}
+
+class MealsController <<Boundary>> {
+    + logMeal(payload: Object): Response
 }
 
 class ScientificService <<Control>> {
     + checkPlateauCondition(userId: String): Boolean
-    - calculateDeficit(tdee: Int, intake: Int): Int
+    - predictPlateau(tdeeReal: Float, tdeeInitial: Float): Boolean
 }
 
 class Meal <<Entity>> {
@@ -120,8 +127,9 @@ class Meal <<Entity>> {
     + updatedAt: DateTime
 }
 
-MealUI --> ScientificService : Yêu cầu hàm xử lý cảnh báo
-ScientificService ..> Meal : Rút trích khối lượng Calo
+MealUI --> MealsController : Gọi HTTP POST
+MealsController --> ScientificService : Yêu cầu hàm xử lý cảnh báo
+ScientificService --> Meal : Quét dữ liệu 7 ngày qualượng Calo
 @enduml
 ```
 *Hình 4.5: Lược đồ Lớp mô tả kiến trúc phân tử hệ thống UC-18.*

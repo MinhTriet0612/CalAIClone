@@ -50,16 +50,19 @@ Lược đồ diễn tả kiến trúc tương tác đa diện khi người dùn
 
 ```plantuml
 @startuml
+title Lược đồ Tuần tự: Trợ lý AI Phân tích Ngữ cảnh Học máy (UC-16)
 autonumber
 skinparam style strictuml
 
 actor "Người dùng" as Actor
 boundary "ChatbotUI" as UI
+boundary "ChatController" as API
 control "AiCoachingService" as Logic
 entity "Profile" as Entity
 
 Actor -> UI : Gửi chuỗi thao tác nhập liệu
-UI -> Logic : generateAdvice(query)
+UI -> API : POST /api/chat
+API -> Logic : generateAdvice(query)
 
 Logic -> Entity : findUnique(userId)
 Entity --> Logic : return Profile Entity (Goal, Macros)
@@ -78,8 +81,9 @@ else Khởi tạo mô hình thành công
     end note
     Logic -> Logic : stripMarkdown(rawText)
     
-    Logic --> UI : return Chuỗi văn bản hiển thị
-    UI --> Actor : Đẩy tin nhắn vào giao diện hội thoại
+    Logic --> API : return Đoạn text phân tích dạng JSON
+    API --> UI : 200 OK
+    UI --> Actor : Hiển thị lời khuyên giao diện bong bóng chat
 end
 @enduml
 ```
@@ -91,17 +95,21 @@ Lược đồ Lớp kiểm soát dịch vụ mạng và tiến trình lọc nộ
 
 ```plantuml
 @startuml
+title Lược đồ Lớp: Tích hợp API Generative AI (UC-16)
 skinparam style strictuml
 
 class ChatbotUI <<Boundary>> {
-    + displayMessage(msg: String)
-    + hideLoadingIndicator()
-    + throwNetworkError()
+    + renderChatHistory(): void
+    + displayNewMessage(): void
+}
+
+class ChatController <<Boundary>> {
+    + handleMessage(payload: Object): Response
 }
 
 class AiCoachingService <<Control>> {
     + generateAdvice(query: String): String
-    - stripMarkdown(rawText: String): String
+    - callExternalLLM(prompt: String): String
 }
 
 class Profile <<Entity>> {
@@ -120,8 +128,11 @@ class Profile <<Entity>> {
     + updatedAt: DateTime
 }
 
-ChatbotUI --> AiCoachingService : Khởi tạo Request
-AiCoachingService ..> Profile : Xem xét tham số
+Profile "1" *-- "0..*" ChatbotUI : Khởi tạo phiên
+ChatbotUI --> ChatController : Gửi Request (HTTP POST)
+ChatController --> AiCoachingService : Yêu cầu xử lý nghiệp vụ
+AiCoachingService --> Profile : Truy vấn ngữ cảnh
+AiCoachingService --> GenerativeAI : Gọi hàm phân tích External API
 @enduml
 ```
 *Hình 4.4: Lược đồ Lớp mô tả kết cấu của hệ sinh thái AI Coaching UC-16.*

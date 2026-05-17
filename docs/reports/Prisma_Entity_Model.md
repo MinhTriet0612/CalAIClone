@@ -4,6 +4,7 @@
 
 ```plantuml
 @startuml
+title Lược đồ Lớp: Biểu diễn Core Database Engine (Prisma Schema Data Model)
 skinparam style strictuml
 skinparam roundcorner 5
 skinparam classAttributeIconSize 0

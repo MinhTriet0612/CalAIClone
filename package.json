@@ -1,0 +1,19 @@
+{
+  "name": "calaiclone",
+  "version": "1.0.0",
+  "description": "A full-stack calorie tracking application. Users photograph meals, Google Gemini AI estimates nutrition, and the system tracks progress against personalised daily macro targets.",
+  "private": true,
+  "scripts": {
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "backend/**/*.ts": [
+      "npm run lint --prefix backend",
+      "npm run format --prefix backend"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
+  }
+}

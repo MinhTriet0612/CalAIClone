@@ -51,32 +51,39 @@ Lược đồ dưới đây mô tả luồng giao tiếp dữ liệu khi Ngườ
 
 ```plantuml
 @startuml
+title UC-14: Theo dõi Xu hướng Cân nặng 
 autonumber
 skinparam style strictuml
 
 actor "Người dùng" as Actor
 boundary "TrendsUI" as UI
-control "WeightLogsController" as Logic
+boundary "WeightLogsController" as API
+control "ScientificService" as Logic
 entity "WeightLog" as Entity
 
 Actor -> UI : Nhập cân nặng hiện tại
-UI -> Logic : createWeightLog(payload, date)
+UI -> API : POST /api/weights
+API -> Logic : processWeightLog(payload, date)
 
 alt Giá trị nhập liệu nằm ngoài khoảng biên
-    Logic --> UI : throw BadRequestException
-    UI --> Actor : Hiển thị lỗi Validation
+    Logic --> API : throw BadRequestException
+    API --> UI : 400 Bad Request
 else Giá trị nhập liệu hợp lệ
-    Logic -> Entity : save(new WeightLog)
-    Entity --> Logic : return (WeightLog Entity Database)
-    
+    Logic -> Entity : findFirst({ orderBy: createdAt_DESC })
+    Entity --> Logic : return null hoặc WeightLog gần nhất (oldTrend)
+
     note over Logic
         [Điểm tính McCabe V(G)=2]
         Hàm tính Đường trung bình động
     end note
-    Logic -> Logic : calculateEMA(logs)
+    Logic -> Logic : calculateEMA(oldTrend, newWeight)
     
-    Logic --> UI : return Mảng đồ thị
-    UI --> Actor : Cập nhật biểu đồ hiển thị
+    Logic -> Entity : save(new WeightLog)
+    Entity --> Logic : return (WeightLog Entity Database)
+    
+    Logic --> API : return WeightLog Object
+    API --> UI : 201 Created Data
+    UI --> Actor : Hiển thị biểu đồ Smoothing Trend
 end
 @enduml
 ```
@@ -88,6 +95,7 @@ Lược đồ Lớp mô tả các thành phần cấu trúc tham gia vào hệ t
 
 ```plantuml
 @startuml
+title Lược đồ Lớp: Thành phần Nghiệp vụ UC-14 (Weight Trends)
 skinparam style strictuml
 
 class TrendsUI <<Boundary>> {
@@ -96,9 +104,13 @@ class TrendsUI <<Boundary>> {
     + showErrorMessage(error: String)
 }
 
-class WeightLogsController <<Control>> {
-    + createWeightLog(weightDto: Object): Response
-    - calculateEMA(logs: Array): Array
+class WeightLogsController <<Boundary>> {
+    + createWeightLog(payload: Object): Response
+}
+
+class ScientificService <<Control>> {
+    + processWeightLog(payload: Object, date: DateTime): WeightLog
+    - calculateEMA(rawCurrent: Float, trendPrevious: Float): Float
 }
 
 class WeightLog <<Entity>> {
@@ -109,8 +121,9 @@ class WeightLog <<Entity>> {
     + createdAt: DateTime
 }
 
-TrendsUI --> WeightLogsController : Gửi Request
-WeightLogsController ..> WeightLog : Quản lý
+TrendsUI --> WeightLogsController : Gửi HTTP POST
+WeightLogsController --> ScientificService : Gọi hàm xử lý nghiệp vụ
+ScientificService --> WeightLog : Thực thi ORM Queryml
 @enduml
 ```
 *Hình 4.2: Lược đồ Lớp mô tả cấu trúc Boundary - Control - Entity của UC-14.*

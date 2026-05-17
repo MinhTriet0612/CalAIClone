@@ -1,0 +1,4 @@
+# Playwright E2E tests — không cần lint qua ESLint frontend
+e2e/
+playwright.config.ts
+playwright-report/

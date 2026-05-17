@@ -50,6 +50,7 @@ Lược đồ dưới đây thể hiện tiến trình định kỳ tự động
 
 ```plantuml
 @startuml
+title Lược đồ Tuần tự: Tự động Cân chỉnh Năng lượng TDEE (UC-15)
 autonumber
 skinparam style strictuml
 
@@ -89,6 +90,7 @@ Thể hiện sự phân tách nhiệm vụ rành mạch trong hệ thống Tự 
 
 ```plantuml
 @startuml
+title Lược đồ Lớp: Ranh giới Dữ liệu UC-15 (Target Auto Adjust)
 skinparam style strictuml
 
 class BackgroundWorker <<Boundary>> {
