@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Meal, DailySummary, MacroTargets } from '../shared/types';
 import { CreateMealDto } from './dto/create-meal.dto';
@@ -203,6 +203,10 @@ export class MealsService {
     const endParts = endDate.split('-');
     const start = new Date(Date.UTC(parseInt(startParts[0], 10), parseInt(startParts[1], 10) - 1, parseInt(startParts[2], 10), 0, 0, 0, 0));
     const end = new Date(Date.UTC(parseInt(endParts[0], 10), parseInt(endParts[1], 10) - 1, parseInt(endParts[2], 10), 23, 59, 59, 999));
+
+    if (start > end) {
+      throw new BadRequestException('Ngày bắt đầu phải nhỏ hơn ngày kết thúc');
+    }
 
     // Get user's creation date
     const user = await this.prisma.user.findUnique({

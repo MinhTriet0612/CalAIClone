@@ -24,6 +24,7 @@ import { ImageService } from '../image/image.service';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { MealAnalysisDto } from './dto/meal-analysis.dto';
 import { DailySummaryDto } from './dto/daily-summary.dto';
+import { GetHistoryDto } from './dto/get-history.dto';
 import type { MealAnalysis } from '../shared/types';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../auth/decorators/user.decorator';
@@ -220,9 +221,8 @@ export class MealsController {
   @ApiResponse({ status: 401, description: 'Unauthorized - Invalid or missing token' })
   async getHistory(
     @User() user: UserPayload,
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query() query: GetHistoryDto,
   ) {
-    return this.mealsService.getHistory(user.id, startDate, endDate);
+    return this.mealsService.getHistory(user.id, query.startDate, query.endDate);
   }
 }
