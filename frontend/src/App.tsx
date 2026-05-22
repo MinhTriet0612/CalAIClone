@@ -288,7 +288,7 @@ function AppContent() {
           </div>
         ) : (
           <div className="insufficient-data">
-            <p>Log your weight for 14 days to unlock adaptive metabolic tracking.</p>
+            <p>{coachingAnalytics?.message || 'Log your weight for 14 days to unlock adaptive metabolic tracking.'}</p>
           </div>
         )}
       </div>

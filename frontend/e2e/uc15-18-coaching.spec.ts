@@ -49,7 +49,7 @@ test.describe('UC-15 & UC-18: Coaching Analytics (FR_15.1 & FR_18.1)', () => {
     await page.route('**/api/coaching/analytics', async (route) => {
       await route.fulfill({
         status: 200,
-        json: { status: 'INSUFFICIENT_DATA', message: 'Not enough data' }
+        json: { status: 'INSUFFICIENT_DATA', message: 'Dữ liệu chưa đủ để phân tích' }
       });
     });
 
@@ -57,10 +57,24 @@ test.describe('UC-15 & UC-18: Coaching Analytics (FR_15.1 & FR_18.1)', () => {
 
     // UI: Hiển thị thông báo chưa đủ dữ liệu
     await expect(page.locator('.insufficient-data')).toBeVisible();
-    await expect(page.getByText('Log your weight for 14 days to unlock')).toBeVisible();
+    await expect(page.getByText('Dữ liệu chưa đủ để phân tích')).toBeVisible();
   });
 
-  test('TC_BB_15.1.1 & TC_BB_15.1.3 — Đủ dữ liệu → Hiện nút và Cập nhật TDEE', async ({ page }) => {
+  test('TC_BB_15.1.3 — Chỉ có 1 ngày dữ liệu → UI thông báo Cần nhập thêm', async ({ page }) => {
+    await page.route('**/api/coaching/analytics', async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: { status: 'INSUFFICIENT_DATA', message: 'Cần nhập thêm độ chênh lệch cân nặng để thiết lập' }
+      });
+    });
+
+    await performLoginAndOnboarding(page);
+
+    await expect(page.locator('.insufficient-data')).toBeVisible();
+    await expect(page.getByText('Cần nhập thêm độ chênh lệch cân nặng để thiết lập')).toBeVisible();
+  });
+
+  test('TC_BB_15.1.1 — Tài khoản đã có dữ liệu → Hiện đồ thị/nút Cập nhật TDEE', async ({ page }) => {
     await page.route('**/api/coaching/analytics', async (route, request) => {
       if (request.method() === 'OPTIONS') {
         await route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*' } });

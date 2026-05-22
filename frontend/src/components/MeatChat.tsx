@@ -89,7 +89,7 @@ export function MeatChat() {
         content: 'Sorry, I could not reach the meat coach. Please try again in a moment.',
       };
       setMessages((prev) => clampMessages([...prev, fallback]));
-      setError(err.response?.data?.message || 'Chat service unavailable.');
+      setError(err.response?.data?.message || 'Xin vui lòng kiểm tra kết nối đường truyền');
     } finally {
       setLoading(false);
     }
