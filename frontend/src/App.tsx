@@ -151,12 +151,12 @@ function AppContent() {
 
     try {
       const mealData = {
-        name: pendingMeal.foodItems.join(', '),
-        foodItems: pendingMeal.foodItems,
-        calories: pendingMeal.calories,
-        protein: pendingMeal.protein,
-        carbs: pendingMeal.carbs,
-        fats: pendingMeal.fats,
+        name: (pendingMeal.foodItems || []).join(', ') || 'Unknown Meal',
+        foodItems: pendingMeal.foodItems || [],
+        calories: pendingMeal.calories || 0,
+        protein: pendingMeal.protein || 0,
+        carbs: pendingMeal.carbs || 0,
+        fats: pendingMeal.fats || 0,
         healthScore: pendingMeal.healthScore,
         imageUrl: pendingMeal.imageUrl,
         date: currentDate, // Use the current dashboard date

@@ -15,6 +15,22 @@ export function AddMealButton({ onMealAnalyzed }: AddMealButtonProps) {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // FR_8.1: Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      alert('Định dạng không hỗ trợ. Vui lòng chọn JPG, PNG hoặc WebP');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    // FR_8.1: Validate file size (Max 10MB)
+    const MAX_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      alert('Dung lượng ảnh tối đa 10MB');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setLoading(true);
     try {
       const analysis = await mealsApi.analyzeMeal(file);

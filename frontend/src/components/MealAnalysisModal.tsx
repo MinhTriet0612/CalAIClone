@@ -20,10 +20,10 @@ export function MealAnalysisModal({
 }: MealAnalysisModalProps) {
   // Calculate projected remaining after this meal
   const projectedRemaining: MacroTargets = {
-    calories: currentRemaining.calories - meal.calories,
-    protein: currentRemaining.protein - meal.protein,
-    carbs: currentRemaining.carbs - meal.carbs,
-    fats: currentRemaining.fats - meal.fats,
+    calories: currentRemaining.calories - (meal.calories || 0),
+    protein: currentRemaining.protein - (meal.protein || 0),
+    carbs: currentRemaining.carbs - (meal.carbs || 0),
+    fats: currentRemaining.fats - (meal.fats || 0),
   };
 
   if (!meal.isFood) {
@@ -75,7 +75,7 @@ export function MealAnalysisModal({
         <div className="detected-items">
           <h4>Food Items:</h4>
           <ul>
-            {meal.foodItems.map((item, index) => (
+            {(meal.foodItems || []).map((item, index) => (
               <li key={index}>{item}</li>
             ))}
           </ul>
@@ -85,16 +85,16 @@ export function MealAnalysisModal({
           <h4>Nutritional Breakdown:</h4>
           <div className="meal-macros">
             <div>
-              Calories: <strong>{meal.calories} cal</strong>
+              Calories: <strong>{meal.calories || 0} cal</strong>
             </div>
             <div>
-              Protein: <strong>{meal.protein} g</strong>
+              Protein: <strong>{meal.protein || 0} g</strong>
             </div>
             <div>
-              Carbs: <strong>{meal.carbs} g</strong>
+              Carbs: <strong>{meal.carbs || 0} g</strong>
             </div>
             <div>
-              Fats: <strong>{meal.fats} g</strong>
+              Fats: <strong>{meal.fats || 0} g</strong>
             </div>
             {meal.healthScore !== undefined && (
               <div style={{ 
