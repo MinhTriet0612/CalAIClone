@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsArray, IsOptional, Min, Max } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsArray, IsOptional, Min, Max } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateMealDto {
@@ -7,6 +7,7 @@ export class CreateMealDto {
     example: 'Grilled Chicken with Rice',
   })
   @IsString()
+  @IsNotEmpty()
   name: string;
 
   @ApiProperty({
@@ -65,13 +66,9 @@ export class CreateMealDto {
   @ApiPropertyOptional({
     description: 'Health score from 1-10 (optional, can be calculated automatically)',
     example: 7,
-    minimum: 1,
-    maximum: 10,
   })
   @IsOptional()
   @IsNumber()
-  @Min(1)
-  @Max(10)
   healthScore?: number;
   @ApiPropertyOptional({
     description: 'Date of the meal (YYYY-MM-DD), defaults to today',
