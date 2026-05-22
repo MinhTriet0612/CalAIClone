@@ -17,7 +17,7 @@ export default defineConfig({
 
   use: {
     // Base URL của Frontend dev server
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     // Headless trong CI, có UI khi dev local
@@ -34,7 +34,7 @@ export default defineConfig({
   // Tự động khởi động dev server trước khi chạy test
   webServer: {
     command: 'npx yarn dev',
-    url: 'http://localhost:5173',
+    url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },
