@@ -28,9 +28,18 @@ const WeightLogModal: React.FC<WeightLogModalProps> = ({ onClose, onSuccess }) =
       const result = await weightLogsApi.logWeight(weightNum);
       onSuccess(result.trendWeight);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error logging weight:', err);
-      setError('Failed to log weight. Please try again.');
+      // Hiển thị lỗi từ backend nếu có (rất quan trọng cho Test Case E2E)
+      const backendMessage = err.response?.data?.message;
+      
+      if (Array.isArray(backendMessage)) {
+        setError(backendMessage.join(', '));
+      } else if (typeof backendMessage === 'string') {
+        setError(backendMessage);
+      } else {
+        setError('Failed to log weight. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

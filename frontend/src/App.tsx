@@ -96,6 +96,7 @@ function AppContent() {
   useEffect(() => {
     if (needsOnboarding === false && token) {
       loadDailySummary(currentDate);
+      loadCoachingAnalytics();
     }
   }, [currentDate, needsOnboarding, token]);
 
@@ -196,6 +197,7 @@ function AppContent() {
         onComplete={() => {
           setNeedsOnboarding(false);
           loadDailySummary();
+          loadCoachingAnalytics();
         }}
       />
     );

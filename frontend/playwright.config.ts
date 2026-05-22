@@ -33,7 +33,7 @@ export default defineConfig({
 
   // Tự động khởi động dev server trước khi chạy test
   webServer: {
-    command: 'npx yarn dev',
+    command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
