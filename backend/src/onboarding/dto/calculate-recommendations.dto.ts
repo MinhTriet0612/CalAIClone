@@ -17,8 +17,8 @@ export class CalculateRecommendationsDto {
     maximum: 250,
   })
   @IsNumber()
-  @Min(100)
-  @Max(250)
+  @Min(100, { message: 'Chiều cao tối thiểu 100 cm' })
+  @Max(250, { message: 'Chiều cao tối đa 250 cm' })
   height: number;
 
   @ApiProperty({
@@ -28,8 +28,8 @@ export class CalculateRecommendationsDto {
     maximum: 300,
   })
   @IsNumber()
-  @Min(30)
-  @Max(300)
+  @Min(30, { message: 'Cân nặng tối thiểu 30 kg' })
+  @Max(300, { message: 'Cân nặng tối đa 300 kg' })
   weight: number;
 
   @ApiProperty({

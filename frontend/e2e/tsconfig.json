@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "lib": ["DOM", "DOM.Iterable", "ES2015"],
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["@playwright/test", "node"]
+  },
+  "include": ["**/*.ts"]
+}

@@ -36,18 +36,7 @@ export class CoachingService {
     });
 
     if (weightLogs.length < 2) {
-      // return { status: 'INSUFFICIENT_DATA', message: 'Need at least 2 weights over 14 days' };
-      // DEMO MODE: Provide fake 14-day data so the user can see the UI!
-      return {
-        status: 'SUCCESS',
-        currentTrendWeight: 75.5,
-        weightChange14d: -1.2,
-        avgIntake14d: 2100,
-        adaptiveTDEE: 2760,
-        isPlateau: false,
-        trajectory: this.scientificService.getTrajectory(75.5, 2100, 2760, 30),
-        isDemo: true, // Flag to show it's mock data
-      };
+      return { status: 'INSUFFICIENT_DATA', message: 'Need at least 2 weights over 14 days' };
     }
 
     const firstWeight = weightLogs[0].trendWeight;

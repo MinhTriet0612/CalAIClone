@@ -19,7 +19,7 @@ export default defineConfig({
     // Base URL của Frontend dev server
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    screenshot: 'on',
     // Headless trong CI, có UI khi dev local
     headless: !!process.env.CI,
   },

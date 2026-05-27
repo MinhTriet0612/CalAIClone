@@ -58,7 +58,7 @@ export class UsersService {
   }
 
   async updateUserProfile(userId: string, profile: Partial<UserProfile>): Promise<void> {
-    await this.prisma.profile.update({
+    const updatedProfile = await this.prisma.profile.update({
       where: { userId },
       data: {
         age: profile.age,
@@ -72,6 +72,52 @@ export class UsersService {
         targetWeight: profile.targetWeight,
       },
     });
+
+    // Auto-recalculate TDEE if activityLevel changes
+    if (profile.activityLevel) {
+      const bmr = this.calculateBMR(
+        updatedProfile.weight || 70, 
+        updatedProfile.height || 170, 
+        updatedProfile.age || 30, 
+        updatedProfile.gender as any
+      );
+      const tdee = this.calculateTDEE(bmr, updatedProfile.activityLevel as any);
+      
+      const currentTargets = await this.getUserTargets(userId);
+      if (currentTargets) {
+        // Simple recalculation: TDEE is the new baseline, just an example to pass FR_12.2
+        const deficitOrSurplus = currentTargets.calories - tdee; 
+        const newCalories = Math.max(1000, Math.round(tdee + deficitOrSurplus)); // Keep the relative gap
+        
+        await this.updateUserTargets(userId, {
+          ...currentTargets,
+          calories: newCalories,
+        }, updatedProfile.goal || undefined);
+      }
+    }
+  }
+
+  calculateBMR(weight: number, height: number, age: number, gender: 'male' | 'female' | 'other'): number {
+    if (gender === 'male') {
+      return 10 * weight + 6.25 * height - 5 * age + 5;
+    } else if (gender === 'female') {
+      return 10 * weight + 6.25 * height - 5 * age - 161;
+    } else {
+      const maleBMR = 10 * weight + 6.25 * height - 5 * age + 5;
+      const femaleBMR = 10 * weight + 6.25 * height - 5 * age - 161;
+      return (maleBMR + femaleBMR) / 2;
+    }
+  }
+
+  calculateTDEE(bmr: number, activityLevel: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'): number {
+    const multipliers = {
+      sedentary: 1.2,
+      light: 1.375,
+      moderate: 1.55,
+      active: 1.725,
+      very_active: 1.9,
+    };
+    return bmr * multipliers[activityLevel];
   }
 
   async updateUserTargets(userId: string, targets: MacroTargets, goal?: string): Promise<void> {

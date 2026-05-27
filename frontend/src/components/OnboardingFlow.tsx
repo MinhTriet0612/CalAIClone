@@ -32,7 +32,8 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
         setRecommendations(recs);
         setStep(6);
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to calculate recommendations');
+        const msg = err.response?.data?.message;
+        setError(Array.isArray(msg) ? msg[0] : (msg || 'Failed to calculate recommendations'));
       } finally {
         setLoading(false);
       }
