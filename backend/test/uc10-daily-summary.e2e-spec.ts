@@ -96,7 +96,7 @@ describe('UC-10: View Daily Summary (e2e)', () => {
         });
     });
 
-    it('TC_BB_10.2.1 & TC_BB_10.2.2 - Tính consumed = tổng macros & remaining = target - consumed (consumed < target)', async () => {
+    it('TC_BB_10.2.1 - Tính consumed = tổng macros & remaining = target - consumed (consumed < target)', async () => {
       // Ghi bữa ăn 1
       await request(app.getHttpServer())
         .post('/api/meals/log')
@@ -130,7 +130,7 @@ describe('UC-10: View Daily Summary (e2e)', () => {
       expect(res.body.consumed.carbs).toBe(150);
       expect(res.body.consumed.fats).toBe(30);
 
-      // TC_BB_10.2.2: Remaining = Target - Consumed (2000 - 1500 = 500)
+      // TC_BB_10.2.1: Remaining = Target - Consumed (2000 - 1500 = 500)
       expect(res.body.remaining.calories).toBe(500);
       expect(res.body.remaining.protein).toBe(20);
       expect(res.body.remaining.carbs).toBe(50);
